@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="IaC Dependency Detection Tests">
+  <testsuite name="config" tests="0" failures="0" time="0.000">
+  </testsuite>
+  <testsuite name="health" tests="5" failures="0" time="0.097">
+    <testcase name="should return healthy status" classname="health" time="0.091"/>
+    <testcase name="should return alive status" classname="health" time="0.001"/>
+    <testcase name="should return readiness status" classname="health" time="0.001"/>
+    <testcase name="should return detailed health status" classname="health" time="0.004"/>
+    <testcase name="should return 404 for unknown routes" classname="health" time="0.001"/>
+  </testsuite>
+  <testsuite name="data-source-detector" tests="0" failures="0" time="0.000">
+  </testsuite>
+  <testsuite name="reference-resolver" tests="0" failures="0" time="0.000">
+  </testsuite>
+  <testsuite name="scan-workflow" tests="17" failures="0" time="0.008">
+    <testcase name="should detect VPC -&gt; Subnet -&gt; Instance dependency chain" classname="scan-workflow" time="0.002"/>
+    <testcase name="should resolve variable references" classname="scan-workflow" time="0.000"/>
+    <testcase name="should generate confidence scores for all edges" classname="scan-workflow" time="0.000"/>
+    <testcase name="should produce valid graph" classname="scan-workflow" time="0.001"/>
+    <testcase name="should detect module dependencies" classname="scan-workflow" time="0.000"/>
+    <testcase name="should detect data source dependencies" classname="scan-workflow" time="0.000"/>
+    <testcase name="should handle references across files" classname="scan-workflow" time="0.000"/>
+    <testcase name="should handle empty file list" classname="scan-workflow" time="0.000"/>
+    <testcase name="should handle files with no blocks" classname="scan-workflow" time="0.000"/>
+    <testcase name="should skip unresolvable references" classname="scan-workflow" time="0.000"/>
+    <testcase name="should complete scan within reasonable time for small projects" classname="scan-workflow" time="0.001"/>
+    <testcase name="should track processing time" classname="scan-workflow" time="0.001"/>
+    <testcase name="should calculate correct node counts by type" classname="scan-workflow" time="0.000"/>
+    <testcase name="should track source files" classname="scan-workflow" time="0.001"/>
+    <testcase name="should correctly parse and categorize module sources" classname="scan-workflow" time="0.001"/>
+    <testcase name="should score explicit references higher than heuristic" classname="scan-workflow" time="0.000"/>
+    <testcase name="should combine multiple evidence sources" classname="scan-workflow" time="0.000"/>
+  </testsuite>
+  <testsuite name="scoring-engine" tests="48" failures="1" time="0.011">
+    <testcase name="should return zero score for empty evidence" classname="scoring-engine" time="0.001"/>
+    <testcase name="should calculate high confidence for explicit evidence" classname="scoring-engine" time="0.005">
+      <failure message="AssertionError: expected &apos;certain&apos; to be &apos;high&apos; // Object.is equality
+    at /Volumes/Externalwork/code-reviewer/api/tests/scoring/scoring-engine.test.ts:60:28
+    at file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:146:14
+    at file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:533:11
+    at runWithTimeout (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:39:7)
+    at runTest (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1056:17)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runFiles (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1262:5)
+    at startTests (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1271:3)">AssertionError: expected &apos;certain&apos; to be &apos;high&apos; // Object.is equality
+    at /Volumes/Externalwork/code-reviewer/api/tests/scoring/scoring-engine.test.ts:60:28
+    at file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:146:14
+    at file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:533:11
+    at runWithTimeout (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:39:7)
+    at runTest (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1056:17)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runFiles (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1262:5)
+    at startTests (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1271:3)</failure>
+    </testcase>
+    <testcase name="should calculate medium confidence for semantic evidence" classname="scoring-engine" time="0.000"/>
+    <testcase name="should apply heuristic penalty for heuristic-only evidence" classname="scoring-engine" time="0.000"/>
+    <testcase name="should apply explicit bonus for explicit evidence" classname="scoring-engine" time="0.000"/>
+    <testcase name="should apply pattern bonus for multiple categories" classname="scoring-engine" time="0.000"/>
+    <testcase name="should apply evidence multiplier with diminishing returns" classname="scoring-engine" time="0.000"/>
+    <testcase name="should respect custom configuration" classname="scoring-engine" time="0.000"/>
+    <testcase name="should apply custom rules" classname="scoring-engine" time="0.000"/>
+    <testcase name="should normalize score to bounds" classname="scoring-engine" time="0.000"/>
+    <testcase name="should collect positive factors" classname="scoring-engine" time="0.000"/>
+    <testcase name="should return certain for 95+" classname="scoring-engine" time="0.000"/>
+    <testcase name="should return high for 80-94" classname="scoring-engine" time="0.000"/>
+    <testcase name="should return medium for 60-79" classname="scoring-engine" time="0.000"/>
+    <testcase name="should return low for 40-59" classname="scoring-engine" time="0.000"/>
+    <testcase name="should return uncertain for 0-39" classname="scoring-engine" time="0.000"/>
+    <testcase name="should validate correct confidence score" classname="scoring-engine" time="0.000"/>
+    <testcase name="should reject score with mismatched level" classname="scoring-engine" time="0.000"/>
+    <testcase name="should reject out-of-bounds score" classname="scoring-engine" time="0.000"/>
+    <testcase name="should return empty score for empty array" classname="scoring-engine" time="0.000"/>
+    <testcase name="should return same score for single item" classname="scoring-engine" time="0.000"/>
+    <testcase name="should merge multiple scores with weighted average" classname="scoring-engine" time="0.000"/>
+    <testcase name="should merge positive and negative factors" classname="scoring-engine" time="0.000"/>
+    <testcase name="should merge breakdowns" classname="scoring-engine" time="0.000"/>
+    <testcase name="should evaluate rules against evidence" classname="scoring-engine" time="0.000"/>
+    <testcase name="should not match rules for wrong evidence type" classname="scoring-engine" time="0.000"/>
+    <testcase name="should evaluate conditions" classname="scoring-engine" time="0.000"/>
+    <testcase name="should sort rules by priority" classname="scoring-engine" time="0.000"/>
+    <testcase name="should calculate score contribution based on matched evidence count" classname="scoring-engine" time="0.000"/>
+    <testcase name="should match equals condition" classname="scoring-engine" time="0.000"/>
+    <testcase name="should not match equals with wrong value" classname="scoring-engine" time="0.000"/>
+    <testcase name="should match contains condition" classname="scoring-engine" time="0.000"/>
+    <testcase name="should match regex condition" classname="scoring-engine" time="0.000"/>
+    <testcase name="should match greater than condition" classname="scoring-engine" time="0.000"/>
+    <testcase name="should match less than condition" classname="scoring-engine" time="0.000"/>
+    <testcase name="should match exists condition" classname="scoring-engine" time="0.000"/>
+    <testcase name="should handle nested field access" classname="scoring-engine" time="0.000"/>
+    <testcase name="should filter rules by evidence type" classname="scoring-engine" time="0.000"/>
+    <testcase name="should return empty array for no matching rules" classname="scoring-engine" time="0.000"/>
+    <testcase name="should return value within bounds" classname="scoring-engine" time="0.000"/>
+    <testcase name="should clamp to minimum" classname="scoring-engine" time="0.000"/>
+    <testcase name="should clamp to maximum" classname="scoring-engine" time="0.000"/>
+    <testcase name="should handle custom bounds" classname="scoring-engine" time="0.000"/>
+    <testcase name="should evaluate rules using new engine instance" classname="scoring-engine" time="0.000"/>
+    <testcase name="should create engine with default config" classname="scoring-engine" time="0.000"/>
+    <testcase name="should create engine with custom config" classname="scoring-engine" time="0.000"/>
+    <testcase name="should have valid default values" classname="scoring-engine" time="0.000"/>
+    <testcase name="should have correct threshold values" classname="scoring-engine" time="0.000"/>
+  </testsuite>
+  <testsuite name="graph-builder" tests="65" failures="0" time="0.009">
+    <testcase name="should add a node to the graph" classname="graph-builder" time="0.001"/>
+    <testcase name="should overwrite existing node with same id" classname="graph-builder" time="0.000"/>
+    <testcase name="should validate node when validateOnAdd is enabled" classname="graph-builder" time="0.000"/>
+    <testcase name="should skip validation when validateOnAdd is disabled" classname="graph-builder" time="0.000"/>
+    <testcase name="should add multiple nodes" classname="graph-builder" time="0.001"/>
+    <testcase name="should add an edge to the graph" classname="graph-builder" time="0.000"/>
+    <testcase name="should skip duplicate edges when allowDuplicateEdges is false" classname="graph-builder" time="0.000"/>
+    <testcase name="should allow duplicate edges when allowDuplicateEdges is true" classname="graph-builder" time="0.000"/>
+    <testcase name="should validate edge source exists when validateOnAdd is true" classname="graph-builder" time="0.000"/>
+    <testcase name="should validate edge target exists when validateOnAdd is true" classname="graph-builder" time="0.000"/>
+    <testcase name="should create and add edge by source and target ids" classname="graph-builder" time="0.000"/>
+    <testcase name="should auto-generate edge id" classname="graph-builder" time="0.000"/>
+    <testcase name="should add multiple edges" classname="graph-builder" time="0.000"/>
+    <testcase name="should return true for existing node" classname="graph-builder" time="0.000"/>
+    <testcase name="should return false for non-existing node" classname="graph-builder" time="0.000"/>
+    <testcase name="should return true for existing edge" classname="graph-builder" time="0.000"/>
+    <testcase name="should return true for edge with specific type" classname="graph-builder" time="0.000"/>
+    <testcase name="should return false for non-existing edge" classname="graph-builder" time="0.000"/>
+    <testcase name="should return node by id" classname="graph-builder" time="0.000"/>
+    <testcase name="should return undefined for non-existing node" classname="graph-builder" time="0.000"/>
+    <testcase name="should return all nodes" classname="graph-builder" time="0.000"/>
+    <testcase name="should return empty array for empty builder" classname="graph-builder" time="0.000"/>
+    <testcase name="should return all edges" classname="graph-builder" time="0.000"/>
+    <testcase name="should return empty array for no edges" classname="graph-builder" time="0.000"/>
+    <testcase name="should return edges from a node" classname="graph-builder" time="0.000"/>
+    <testcase name="should return empty array for node with no outgoing edges" classname="graph-builder" time="0.000"/>
+    <testcase name="should return edges to a node" classname="graph-builder" time="0.000"/>
+    <testcase name="should remove node and its edges" classname="graph-builder" time="0.000"/>
+    <testcase name="should return false for non-existing node" classname="graph-builder" time="0.000"/>
+    <testcase name="should remove edge by id" classname="graph-builder" time="0.000"/>
+    <testcase name="should return false for non-existing edge" classname="graph-builder" time="0.000"/>
+    <testcase name="should build dependency graph" classname="graph-builder" time="0.000"/>
+    <testcase name="should calculate node counts by type" classname="graph-builder" time="0.000"/>
+    <testcase name="should calculate edge counts by type" classname="graph-builder" time="0.000"/>
+    <testcase name="should collect unique source files" classname="graph-builder" time="0.000"/>
+    <testcase name="should track build time" classname="graph-builder" time="0.000"/>
+    <testcase name="should remove all nodes and edges" classname="graph-builder" time="0.000"/>
+    <testcase name="should merge empty graphs" classname="graph-builder" time="0.000"/>
+    <testcase name="should merge single graph" classname="graph-builder" time="0.000"/>
+    <testcase name="should merge multiple graphs" classname="graph-builder" time="0.000"/>
+    <testcase name="should handle node conflicts with keep-first strategy" classname="graph-builder" time="0.000"/>
+    <testcase name="should handle node conflicts with keep-last strategy" classname="graph-builder" time="0.000"/>
+    <testcase name="should handle node conflicts with merge strategy" classname="graph-builder" time="0.000"/>
+    <testcase name="should throw on node conflict with error strategy" classname="graph-builder" time="0.000"/>
+    <testcase name="should apply node ID prefix" classname="graph-builder" time="0.000"/>
+    <testcase name="should validate valid graph" classname="graph-builder" time="0.000"/>
+    <testcase name="should detect dangling source edge" classname="graph-builder" time="0.000"/>
+    <testcase name="should detect dangling target edge" classname="graph-builder" time="0.000"/>
+    <testcase name="should warn about self-loops" classname="graph-builder" time="0.000"/>
+    <testcase name="should warn about orphan nodes" classname="graph-builder" time="0.000"/>
+    <testcase name="should warn about cycles" classname="graph-builder" time="0.000"/>
+    <testcase name="should return false for acyclic graph" classname="graph-builder" time="0.000"/>
+    <testcase name="should return true for cyclic graph" classname="graph-builder" time="0.000"/>
+    <testcase name="should return false for empty graph" classname="graph-builder" time="0.000"/>
+    <testcase name="should handle complex graphs" classname="graph-builder" time="0.000"/>
+    <testcase name="should find orphan nodes" classname="graph-builder" time="0.000"/>
+    <testcase name="should not include connected nodes" classname="graph-builder" time="0.000"/>
+    <testcase name="should find unreachable nodes from starting point" classname="graph-builder" time="0.000"/>
+    <testcase name="should return all nodes for non-existent starting point" classname="graph-builder" time="0.000"/>
+    <testcase name="should return empty for fully connected graph from proper start" classname="graph-builder" time="0.000"/>
+    <testcase name="should create builder with default options" classname="graph-builder" time="0.000"/>
+    <testcase name="should create builder with custom options" classname="graph-builder" time="0.000"/>
+    <testcase name="should create empty graph with default id" classname="graph-builder" time="0.000"/>
+    <testcase name="should create empty graph with custom id" classname="graph-builder" time="0.000"/>
+    <testcase name="should merge graphs using convenience function" classname="graph-builder" time="0.000"/>
+  </testsuite>
+  <testsuite name="chart-parser" tests="0" failures="0" time="0.000">
+  </testsuite>
+  <testsuite name="module-detector" tests="37" failures="1" time="0.023">
+    <testcase name="should parse relative local path" classname="module-detector" time="0.002"/>
+    <testcase name="should parse parent directory path" classname="module-detector" time="0.000"/>
+    <testcase name="should parse absolute path" classname="module-detector" time="0.000"/>
+    <testcase name="should parse public registry module" classname="module-detector" time="0.000"/>
+    <testcase name="should parse terraform-aws-modules source" classname="module-detector" time="0.000"/>
+    <testcase name="should parse private registry module with hostname" classname="module-detector" time="0.000"/>
+    <testcase name="should parse GitHub HTTPS source" classname="module-detector" time="0.000"/>
+    <testcase name="should parse GitHub HTTPS with subpath" classname="module-detector" time="0.000"/>
+    <testcase name="should parse GitHub SSH source" classname="module-detector" time="0.000"/>
+    <testcase name="should parse GitHub with ref" classname="module-detector" time="0.011">
+      <failure message="AssertionError: expected &apos;unknown&apos; to be &apos;github&apos; // Object.is equality
+    at /Volumes/Externalwork/code-reviewer/api/tests/parsers/terraform/module-detector.test.ts:133:27
+    at file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:146:14
+    at file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:533:11
+    at runWithTimeout (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:39:7)
+    at runTest (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1056:17)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runFiles (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1262:5)
+    at startTests (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1271:3)">AssertionError: expected &apos;unknown&apos; to be &apos;github&apos; // Object.is equality
+    at /Volumes/Externalwork/code-reviewer/api/tests/parsers/terraform/module-detector.test.ts:133:27
+    at file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:146:14
+    at file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:533:11
+    at runWithTimeout (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:39:7)
+    at runTest (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1056:17)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runSuite (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1205:15)
+    at runFiles (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1262:5)
+    at startTests (file:///Volumes/Externalwork/code-reviewer/api/node_modules/@vitest/runner/dist/index.js:1271:3)</failure>
+    </testcase>
+    <testcase name="should parse generic git URL" classname="module-detector" time="0.000"/>
+    <testcase name="should parse git URL with ref" classname="module-detector" time="0.000"/>
+    <testcase name="should parse git SSH URL" classname="module-detector" time="0.000"/>
+    <testcase name="should parse S3 source" classname="module-detector" time="0.000"/>
+    <testcase name="should parse S3 source without region" classname="module-detector" time="0.000"/>
+    <testcase name="should parse GCS source" classname="module-detector" time="0.000"/>
+    <testcase name="should handle unknown source format" classname="module-detector" time="0.000"/>
+    <testcase name="should parse single version" classname="module-detector" time="0.001"/>
+    <testcase name="should parse explicit equals" classname="module-detector" time="0.001"/>
+    <testcase name="should parse pessimistic constraint" classname="module-detector" time="0.000"/>
+    <testcase name="should parse greater than or equal" classname="module-detector" time="0.000"/>
+    <testcase name="should parse less than" classname="module-detector" time="0.000"/>
+    <testcase name="should parse compound constraint" classname="module-detector" time="0.000"/>
+    <testcase name="should parse pessimistic with patch version" classname="module-detector" time="0.000"/>
+    <testcase name="should parse not equal" classname="module-detector" time="0.001"/>
+    <testcase name="should detect local module" classname="module-detector" time="0.000"/>
+    <testcase name="should detect registry module with version" classname="module-detector" time="0.000"/>
+    <testcase name="should detect module with providers mapping" classname="module-detector" time="0.000"/>
+    <testcase name="should detect module with depends_on" classname="module-detector" time="0.000"/>
+    <testcase name="should detect module with count" classname="module-detector" time="0.000"/>
+    <testcase name="should detect module with for_each" classname="module-detector" time="0.000"/>
+    <testcase name="should handle multiple modules" classname="module-detector" time="0.000"/>
+    <testcase name="should ignore non-module blocks" classname="module-detector" time="0.000"/>
+    <testcase name="should skip module blocks without source" classname="module-detector" time="0.000"/>
+    <testcase name="should preserve source location" classname="module-detector" time="0.000"/>
+    <testcase name="should be a ModuleDetector instance" classname="module-detector" time="0.000"/>
+    <testcase name="should detect modules" classname="module-detector" time="0.000"/>
+  </testsuite>
+</testsuites>

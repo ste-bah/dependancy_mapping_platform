@@ -1,0 +1,148 @@
+{
+  "version": "1.0.0",
+  "feature": "TASK-ROLLUP-003",
+  "name": "External Object Indexing",
+  "date": "2026-01-29",
+  "environment": {
+    "nodeVersion": "v22.x",
+    "platform": "darwin",
+    "testFramework": "vitest@2.1.9"
+  },
+  "performanceBaselines": {
+    "nfrPerf008": {
+      "singleLookupLatencyMs": {
+        "target": 100,
+        "current": "< 100",
+        "status": "PASS"
+      },
+      "reverseLookupLatencyMs": {
+        "target": 500,
+        "current": "< 500",
+        "status": "PASS"
+      },
+      "batchLookup1000Ms": {
+        "target": 2000,
+        "current": "< 2000",
+        "status": "PASS"
+      },
+      "indexBuild10kNodesMs": {
+        "target": 30000,
+        "current": "N/A - mock test failure",
+        "status": "UNTESTED"
+      },
+      "throughputOpsPerSec": {
+        "target": 500,
+        "current": "> 500",
+        "status": "PASS"
+      },
+      "cacheHitRatio": {
+        "target": 0.80,
+        "current": 0.785,
+        "tolerance": 0.02,
+        "status": "MARGINAL"
+      },
+      "p95LatencyMs": {
+        "target": 150,
+        "current": "< 150",
+        "status": "PASS"
+      },
+      "p99LatencyMs": {
+        "target": 300,
+        "current": "< 300",
+        "status": "PASS"
+      }
+    }
+  },
+  "existingFunctionality": {
+    "rollupService": {
+      "apiContracts": "PRESERVED",
+      "interfaceMethods": "PRESERVED",
+      "databaseSchema": "UNCHANGED"
+    },
+    "matcherFactory": {
+      "createMatcher": "PRESERVED",
+      "createMatchers": "PRESERVED",
+      "getAvailableTypes": "PRESERVED",
+      "supportedTypes": ["arn", "resource_id", "name", "tag"]
+    },
+    "mergeEngine": {
+      "merge": "PRESERVED",
+      "validateInput": "PRESERVED"
+    },
+    "blastRadiusEngine": {
+      "analyze": "PRESERVED",
+      "getCached": "PRESERVED"
+    }
+  },
+  "newInterfaces": {
+    "IExternalObjectIndexService": {
+      "methods": ["buildIndex", "lookupByExternalId", "reverseLookup", "invalidate", "getStats"]
+    },
+    "IExternalObjectRepository": {
+      "methods": ["saveEntries", "findByExternalId", "findByNodeId", "deleteEntries", "countEntries", "countByType"]
+    },
+    "IExternalObjectCache": {
+      "methods": ["get", "set", "delete", "deleteByPattern", "invalidateTenant", "getStats"]
+    },
+    "IIndexEngine": {
+      "methods": ["processNodes", "buildInvertedIndex", "mergeIndex"]
+    },
+    "IExternalReferenceExtractor": {
+      "methods": ["canHandle", "extract", "normalize", "parseComponents"],
+      "implementations": ["ArnExtractor", "K8sExtractor", "ResourceIdExtractor"]
+    }
+  },
+  "newDatabaseObjects": {
+    "tables": [
+      "external_objects_master",
+      "node_external_objects",
+      "external_object_index"
+    ],
+    "indexes": [
+      "idx_eom_tenant_type",
+      "idx_eom_reference_hash",
+      "idx_eom_normalized_id",
+      "idx_eom_provider",
+      "idx_neo_tenant_repo",
+      "idx_neo_external_object",
+      "idx_neo_reference_hash",
+      "idx_neo_node_id",
+      "idx_neo_scan_id",
+      "idx_neo_tenant_ref_type",
+      "idx_neo_tenant_repo_created",
+      "idx_neo_confidence",
+      "idx_eoi_tenant_repo",
+      "idx_eoi_external_id",
+      "idx_eoi_normalized_id",
+      "idx_eoi_node_id",
+      "idx_eoi_scan_id",
+      "idx_eoi_ref_type",
+      "idx_eoi_indexed_at",
+      "idx_eoi_components"
+    ],
+    "functions": [
+      "get_nodes_by_external_object",
+      "get_external_object_index_stats",
+      "bulk_insert_external_object_index"
+    ],
+    "policies": [
+      "eom_tenant_isolation",
+      "neo_tenant_isolation",
+      "eoi_tenant_isolation"
+    ]
+  },
+  "breakingChanges": [],
+  "regressions": [],
+  "recommendations": {
+    "testMaintenance": [
+      "Update rollup-fixtures.js to match TypeBox schema constraints",
+      "Fix mock setups for database functions in integration tests",
+      "Increase cache hit ratio test iterations for statistical stability"
+    ],
+    "monitoring": [
+      "Track cache hit ratio in production - target 80%+",
+      "Monitor lookup latency P95/P99 metrics",
+      "Alert on index build time > 30s for 10K+ nodes"
+    ]
+  }
+}

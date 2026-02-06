@@ -1,0 +1,59 @@
+# Helm Chart Fixture
+# Tests Helm chart parsing and dependency detection
+#
+# Expected: Chart metadata extraction, dependency resolution
+
+apiVersion: v2
+name: webapp
+description: A Helm chart for deploying a web application
+type: application
+version: 1.0.0
+appVersion: "2.0.0"
+kubeVersion: ">=1.23.0-0"
+
+keywords:
+  - webapp
+  - nodejs
+  - api
+
+home: https://github.com/example/webapp
+sources:
+  - https://github.com/example/webapp
+
+maintainers:
+  - name: DevOps Team
+    email: devops@example.com
+    url: https://example.com
+
+icon: https://example.com/icon.png
+
+annotations:
+  category: Web Application
+  licenses: Apache-2.0
+
+# Chart dependencies
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+    tags:
+      - database
+      - backend
+    import-values:
+      - child: primary.service
+        parent: database.service
+
+  - name: redis
+    version: "17.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+    tags:
+      - cache
+      - backend
+
+  - name: common
+    version: "2.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    tags:
+      - bitnami-common

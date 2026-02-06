@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "createdAt": "2024-01-27T00:00:00.000Z",
+  "updatedAt": "2024-01-27T00:00:00.000Z",
+  "hash": "e5f6g7h8i9j0k1l2",
+  "generator": "generate-baselines.ts",
+  "data": {
+    "simpleGraph": {
+      "nodes": ["aws_vpc.main", "aws_subnet.public"],
+      "edges": [
+        {
+          "source": "aws_subnet.public",
+          "target": "aws_vpc.main",
+          "type": "references"
+        }
+      ],
+      "nodeCounts": {
+        "terraform_resource": 2
+      },
+      "edgeCounts": {
+        "references": 1
+      }
+    },
+    "complexGraph": {
+      "nodes": [
+        "aws_vpc.main",
+        "aws_subnet.public",
+        "aws_instance.web",
+        "var.env",
+        "module.rds",
+        "data.aws_ami.latest"
+      ],
+      "edgeCount": 4,
+      "edgeTypes": ["references", "input_variable", "data_reference"],
+      "nodeCounts": {
+        "terraform_resource": 3,
+        "terraform_variable": 1,
+        "terraform_module": 1,
+        "terraform_data": 1
+      }
+    },
+    "metadata": {
+      "requiredFields": [
+        "createdAt",
+        "sourceFiles",
+        "nodeCounts",
+        "edgeCounts",
+        "buildTimeMs"
+      ]
+    }
+  }
+}

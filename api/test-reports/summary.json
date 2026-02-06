@@ -1,0 +1,13 @@
+{
+  "totalSuites": 79,
+  "passedSuites": 69,
+  "failedSuites": 10,
+  "totalTests": 172,
+  "passedTests": 170,
+  "failedTests": 2,
+  "skippedTests": 0,
+  "duration": 1.22,
+  "timestamp": "2026-01-27T20:53:25.615Z",
+  "passRate": 98.83720930232558,
+  "coverageAvailable": false
+}

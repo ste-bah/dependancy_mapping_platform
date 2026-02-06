@@ -1,0 +1,393 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-01-31T20:55:00.000Z",
+  "baselineVersion": "main-HEAD",
+  "metadata": {
+    "nodeVersion": "v22.21.1",
+    "platform": "darwin",
+    "testFramework": "vitest@1.6.1",
+    "feature": "Graph Visualization"
+  },
+  "summary": {
+    "totalTests": 586,
+    "stableTests": 419,
+    "flakyTests": 5,
+    "knownFailures": 162,
+    "passRate": "71.5%"
+  },
+  "testSuites": {
+    "utility": {
+      "status": "STABLE",
+      "total": 273,
+      "passed": 271,
+      "failed": 2,
+      "passRate": "99.3%",
+      "files": [
+        {
+          "file": "layout.test.ts",
+          "tests": 25,
+          "passed": 25,
+          "status": "STABLE",
+          "functions": ["calculateLayout", "calculateGraphBounds", "getOptimalDirection", "relayoutSubgraph", "hasCycles"]
+        },
+        {
+          "file": "filters.test.ts",
+          "tests": 34,
+          "passed": 34,
+          "status": "STABLE",
+          "functions": ["filterNodes", "filterNodesByType", "filterNodesBySearch", "filterEdges", "filterEdgesByType", "filterEdgesByConfidence", "getConnectedNodeIds", "filterConnectedNodes", "applyHighlighting", "applyEdgeHighlighting", "clearHighlighting", "clearEdgeHighlighting", "applyFiltersAndHighlighting"]
+        },
+        {
+          "file": "urlState.test.ts",
+          "tests": 46,
+          "passed": 46,
+          "status": "STABLE",
+          "functions": ["filtersToSearchParams", "extendedFiltersToSearchParams", "searchParamsToFilters", "searchParamsToExtendedFilters", "selectedNodeToParam", "paramToSelectedNode", "viewportToSearchParams", "searchParamsToViewport", "stateToSearchParams", "extendedStateToSearchParams", "searchParamsToState", "searchParamsToExtendedState", "updateUrlParams", "getCurrentUrlParams", "mergeUrlParams", "clearGraphUrlParams"]
+        },
+        {
+          "file": "blastRadius.test.ts",
+          "tests": 34,
+          "passed": 34,
+          "status": "STABLE",
+          "functions": ["getAffectedNodeIds", "getAffectedByType", "getAffectedByDepth", "getImpactLevel", "getImpactSeverityFromScore", "getImpactColor", "getImpactColorFromScore", "sortByImpact", "sortFlowNodesByImpact", "calculateClientBlastRadius", "clientBlastRadiusToResponse", "isNodeAffected", "isDirectlyAffected", "getBlastRadiusSummary", "getAffectedEdgeIds"]
+        },
+        {
+          "file": "search.test.ts",
+          "tests": 35,
+          "passed": 34,
+          "failed": 1,
+          "status": "MINOR_REGRESSION",
+          "failingTests": ["should find nodes by id"],
+          "failureReason": "Fuse.js search returns 2 results instead of expected 1 - query matches multiple nodes"
+        },
+        {
+          "file": "transformers.test.ts",
+          "tests": 55,
+          "passed": 54,
+          "failed": 1,
+          "status": "MINOR_REGRESSION",
+          "failingTests": ["should highlight edges between highlighted nodes"],
+          "failureReason": "Edge highlighting function returning false instead of true for highlighted edges"
+        },
+        {
+          "file": "validation.test.ts",
+          "tests": 30,
+          "passed": 30,
+          "status": "STABLE"
+        },
+        {
+          "file": "errorHandler.test.ts",
+          "tests": 12,
+          "passed": 0,
+          "failed": 12,
+          "status": "MOCK_ERROR",
+          "failureReason": "vi.mock hoisting issue - MockApiClientError referenced before initialization"
+        },
+        {
+          "file": "testUtils.tsx",
+          "tests": 0,
+          "status": "NOT_A_TEST",
+          "note": "Utility file incorrectly matching test pattern"
+        }
+      ]
+    },
+    "hooks": {
+      "status": "UNSTABLE",
+      "total": 120,
+      "passed": 88,
+      "failed": 32,
+      "passRate": "73.3%",
+      "files": [
+        {
+          "file": "useGraph.test.tsx",
+          "tests": 27,
+          "passed": 0,
+          "failed": 27,
+          "status": "BROKEN",
+          "failureReason": "React child rendering error - objects returned instead of React elements in mock",
+          "knownIssues": ["Mock wrapper returning object instead of component"]
+        },
+        {
+          "file": "useGraphUrlState.test.tsx",
+          "tests": 30,
+          "passed": 27,
+          "failed": 3,
+          "status": "MINOR_REGRESSION",
+          "failingTests": [
+            "should merge with default filters provided in options",
+            "should toggle blast radius off",
+            "should generate shareable URL"
+          ],
+          "failureReason": "URL parameter key mismatch - 'q' vs 'search', initialization order"
+        },
+        {
+          "file": "useGraphPreferences.test.ts",
+          "tests": 20,
+          "passed": 20,
+          "status": "STABLE"
+        },
+        {
+          "file": "queries.test.tsx",
+          "tests": 43,
+          "passed": 41,
+          "failed": 2,
+          "status": "MINOR_REGRESSION",
+          "failingTests": [
+            "should set blast radius data in cache after successful fetch",
+            "should invalidate scan-specific queries"
+          ],
+          "failureReason": "Query caching behavior differs from expectation"
+        }
+      ]
+    },
+    "components": {
+      "status": "UNSTABLE",
+      "total": 175,
+      "passed": 60,
+      "failed": 115,
+      "passRate": "34.3%",
+      "files": [
+        {
+          "file": "CustomNode.test.tsx",
+          "tests": 25,
+          "passed": 20,
+          "failed": 5,
+          "status": "MINOR_ISSUES",
+          "failureReason": "Some style assertions fail due to CSS-in-JS differences"
+        },
+        {
+          "file": "GraphCanvas.test.tsx",
+          "tests": 30,
+          "passed": 5,
+          "failed": 25,
+          "status": "BROKEN",
+          "failureReason": "ReactFlow mock incomplete - missing node/edge rendering"
+        },
+        {
+          "file": "FilterPanel.test.tsx",
+          "tests": 20,
+          "passed": 15,
+          "failed": 5,
+          "status": "MINOR_ISSUES"
+        },
+        {
+          "file": "SearchBar.test.tsx",
+          "tests": 20,
+          "passed": 1,
+          "failed": 19,
+          "status": "BROKEN",
+          "failureReason": "Fuse.js mock not properly configured - fuse.search is not a function"
+        },
+        {
+          "file": "DetailPanel.test.tsx",
+          "tests": 20,
+          "passed": 8,
+          "failed": 12,
+          "status": "UNSTABLE"
+        },
+        {
+          "file": "GraphSkeleton.test.tsx",
+          "tests": 10,
+          "passed": 10,
+          "status": "STABLE"
+        },
+        {
+          "file": "GraphEmptyState.test.tsx",
+          "tests": 10,
+          "passed": 10,
+          "status": "STABLE"
+        },
+        {
+          "file": "GraphErrorBoundary.test.tsx",
+          "tests": 40,
+          "passed": 1,
+          "failed": 39,
+          "status": "BROKEN",
+          "failureReason": "vi.mock missing Alert export - component mock incomplete"
+        }
+      ]
+    },
+    "integration": {
+      "status": "UNSTABLE",
+      "total": 43,
+      "passed": 15,
+      "failed": 28,
+      "passRate": "34.9%",
+      "files": [
+        {
+          "file": "graphDataFlow.test.tsx",
+          "tests": 18,
+          "passed": 5,
+          "failed": 13,
+          "status": "UNSTABLE",
+          "failingTests": [
+            "should transform API data to React Flow format",
+            "should debounce search query",
+            "should track selected node",
+            "should mark selected node in transformed data",
+            "should fetch node detail when selected",
+            "should fetch blast radius when requested"
+          ],
+          "failureReason": "Async timeout issues (10s) and assertion mismatches"
+        },
+        {
+          "file": "filterIntegration.test.tsx",
+          "tests": 25,
+          "passed": 10,
+          "failed": 15,
+          "status": "UNSTABLE",
+          "failingTests": [
+            "should generate shareable URL with all filters",
+            "should highlight nodes matching search",
+            "should highlight blast radius affected nodes",
+            "should mark selected node"
+          ],
+          "failureReason": "URL param key differences ('q' vs 'search'), highlighting function bugs"
+        }
+      ]
+    }
+  },
+  "breakingChanges": [],
+  "regressions": [
+    {
+      "id": "REG-001",
+      "severity": "minor",
+      "component": "search.test.ts",
+      "description": "Fuse.js search returns 2 results for 'terraform' query instead of 1",
+      "previousBehavior": "Exact ID match returned single result",
+      "currentBehavior": "Query matches node type and ID, returning 2 results",
+      "impact": "Search results may include additional matches"
+    },
+    {
+      "id": "REG-002",
+      "severity": "minor",
+      "component": "transformers.test.ts",
+      "description": "Edge highlighting returns false for edges between highlighted nodes",
+      "previousBehavior": "Edges between two highlighted nodes were marked highlighted=true",
+      "currentBehavior": "Function returns highlighted=false",
+      "impact": "Visual highlighting of relationship paths incomplete"
+    }
+  ],
+  "knownIssues": [
+    {
+      "id": "ISSUE-001",
+      "severity": "high",
+      "component": "useGraph.test.tsx",
+      "description": "React test wrapper returns object instead of component",
+      "affectedTests": 27,
+      "rootCause": "Incorrect mock implementation in test setup"
+    },
+    {
+      "id": "ISSUE-002",
+      "severity": "high",
+      "component": "GraphErrorBoundary.test.tsx",
+      "description": "vi.mock missing Alert export from shared components",
+      "affectedTests": 39,
+      "rootCause": "Incomplete mock - Alert not exported from vi.mock factory"
+    },
+    {
+      "id": "ISSUE-003",
+      "severity": "high",
+      "component": "SearchBar.test.tsx",
+      "description": "Fuse.js mock not properly initialized",
+      "affectedTests": 19,
+      "rootCause": "Mock missing search method implementation"
+    },
+    {
+      "id": "ISSUE-004",
+      "severity": "medium",
+      "component": "errorHandler.test.ts",
+      "description": "vi.mock hoisting causes reference error",
+      "affectedTests": 12,
+      "rootCause": "Variable referenced in mock factory before initialization"
+    },
+    {
+      "id": "ISSUE-005",
+      "severity": "medium",
+      "component": "integration",
+      "description": "Async tests timing out at 10 seconds",
+      "affectedTests": 6,
+      "rootCause": "waitFor timeout insufficient for complex async flows"
+    }
+  ],
+  "stableBaselines": {
+    "layout": {
+      "functions": 5,
+      "tests": 25,
+      "coverage": "100%",
+      "lastModified": "2026-01-31"
+    },
+    "filters": {
+      "functions": 13,
+      "tests": 34,
+      "coverage": "100%",
+      "lastModified": "2026-01-31"
+    },
+    "urlState": {
+      "functions": 16,
+      "tests": 46,
+      "coverage": "100%",
+      "lastModified": "2026-01-31"
+    },
+    "blastRadius": {
+      "functions": 15,
+      "tests": 34,
+      "coverage": "100%",
+      "lastModified": "2026-01-31"
+    }
+  },
+  "performanceBaselines": {
+    "layoutTestSuite": {
+      "duration": "31ms",
+      "setup": "585ms",
+      "totalTime": "2.11s"
+    },
+    "filtersTestSuite": {
+      "duration": "11ms",
+      "setup": "546ms",
+      "totalTime": "1.48s"
+    },
+    "urlStateTestSuite": {
+      "duration": "13ms",
+      "setup": "557ms",
+      "totalTime": "1.42s"
+    },
+    "blastRadiusTestSuite": {
+      "duration": "8ms",
+      "setup": "550ms",
+      "totalTime": "1.48s"
+    }
+  },
+  "recommendations": [
+    {
+      "priority": "high",
+      "action": "Fix useGraph.test.tsx mock wrapper to return proper React element",
+      "impact": "Restores 27 tests to passing"
+    },
+    {
+      "priority": "high",
+      "action": "Add Alert export to @/shared/components mock in GraphErrorBoundary tests",
+      "impact": "Restores 39 tests to passing"
+    },
+    {
+      "priority": "high",
+      "action": "Fix Fuse.js mock in SearchBar.test.tsx to implement search method",
+      "impact": "Restores 19 tests to passing"
+    },
+    {
+      "priority": "medium",
+      "action": "Fix vi.mock hoisting in errorHandler.test.ts",
+      "impact": "Restores 12 tests to passing"
+    },
+    {
+      "priority": "medium",
+      "action": "Increase testTimeout for async integration tests to 30000ms",
+      "impact": "Resolves 6 timeout failures"
+    },
+    {
+      "priority": "low",
+      "action": "Review updateEdgesState function for edge highlighting logic",
+      "impact": "Fixes 1 transformer test"
+    }
+  ]
+}

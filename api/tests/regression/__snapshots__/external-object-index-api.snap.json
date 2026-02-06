@@ -1,0 +1,128 @@
+{
+  "snapshotVersion": "1.0.0",
+  "generatedAt": "2026-01-29T13:07:00.000Z",
+  "task": "TASK-ROLLUP-003",
+
+  "ExternalObjectEntry": {
+    "requiredFields": [
+      "id",
+      "externalId",
+      "referenceType",
+      "normalizedId",
+      "tenantId",
+      "repositoryId",
+      "scanId",
+      "nodeId",
+      "nodeName",
+      "nodeType",
+      "filePath",
+      "components",
+      "metadata",
+      "indexedAt"
+    ],
+    "fieldTypes": {
+      "id": "string",
+      "externalId": "string",
+      "referenceType": "ExternalReferenceType",
+      "normalizedId": "string",
+      "tenantId": "TenantId",
+      "repositoryId": "RepositoryId",
+      "scanId": "ScanId",
+      "nodeId": "string",
+      "nodeName": "string",
+      "nodeType": "string",
+      "filePath": "string",
+      "components": "Record<string, string>",
+      "metadata": "Record<string, unknown>",
+      "indexedAt": "Date"
+    }
+  },
+
+  "ExternalObjectLookupResult": {
+    "requiredFields": [
+      "externalId",
+      "entries",
+      "totalCount",
+      "fromCache",
+      "lookupTimeMs"
+    ],
+    "fieldTypes": {
+      "externalId": "string",
+      "entries": "ExternalObjectEntry[]",
+      "totalCount": "number",
+      "fromCache": "boolean",
+      "lookupTimeMs": "number"
+    }
+  },
+
+  "ReverseLookupResult": {
+    "requiredFields": [
+      "nodeId",
+      "references",
+      "totalCount",
+      "fromCache",
+      "lookupTimeMs"
+    ],
+    "fieldTypes": {
+      "nodeId": "string",
+      "references": "ExternalObjectEntry[]",
+      "totalCount": "number",
+      "fromCache": "boolean",
+      "lookupTimeMs": "number"
+    }
+  },
+
+  "IndexBuildResult": {
+    "requiredFields": [
+      "entriesCreated",
+      "entriesUpdated",
+      "entriesSkipped",
+      "errors",
+      "buildTimeMs",
+      "processedScans"
+    ],
+    "fieldTypes": {
+      "entriesCreated": "number",
+      "entriesUpdated": "number",
+      "entriesSkipped": "number",
+      "errors": "number",
+      "buildTimeMs": "number",
+      "processedScans": "ScanId[]"
+    }
+  },
+
+  "ExternalReferenceType": {
+    "validValues": [
+      "arn",
+      "resource_id",
+      "k8s_reference",
+      "gcp_resource",
+      "azure_resource"
+    ]
+  },
+
+  "IExternalObjectIndexService": {
+    "methods": {
+      "buildIndex": {
+        "parameters": ["tenantId: TenantId", "repositoryIds: RepositoryId[]", "options?: IndexBuildOptions"],
+        "returns": "Promise<IndexBuildResult>"
+      },
+      "lookupByExternalId": {
+        "parameters": ["tenantId: TenantId", "externalId: string", "options?: LookupOptions"],
+        "returns": "Promise<ExternalObjectLookupResult>"
+      },
+      "reverseLookup": {
+        "parameters": ["tenantId: TenantId", "nodeId: string", "scanId: ScanId"],
+        "returns": "Promise<ReverseLookupResult>"
+      },
+      "invalidate": {
+        "parameters": ["tenantId: TenantId", "options: InvalidateOptions"],
+        "returns": "Promise<number>"
+      },
+      "getStats": {
+        "parameters": ["tenantId: TenantId"],
+        "returns": "Promise<ExternalObjectIndexStats>"
+      }
+    }
+  }
+}

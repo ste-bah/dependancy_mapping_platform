@@ -1,0 +1,88 @@
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+*.js.map
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Docker volumes (local development)
+.docker-data/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# API specific
+api/node_modules/
+api/dist/
+
+# UI specific
+ui/node_modules/
+ui/dist/
+ui/.next/
+
+# Terraform state and local files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Claude Code / AI Assistant files
+.claude/
+.claude-flow/
+.pipeline-state/
+.swarm/
+CLAUDE.md
+.mcp.json
+
+# Research and temporary analysis
+research/
+
+# E2E test artifacts
+e2e/screenshots/
+e2e/videos/
+e2e/downloads/
+playwright-report/
+test-results/
+
+# Package lock files (optional - uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

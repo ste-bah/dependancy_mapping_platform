@@ -1,0 +1,437 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`API Response Snapshots > should match error response structure snapshot 1`] = `
+{
+  "hasCode": true,
+  "hasDetails": true,
+  "hasError": true,
+  "hasMessage": true,
+  "statusCode": 400,
+}
+`;
+
+exports[`API Response Snapshots > should match graph query response structure snapshot 1`] = `
+{
+  "edgeCount": 1,
+  "firstEdgeKeys": [
+    "confidence",
+    "id",
+    "isImplicit",
+    "source",
+    "target",
+    "type",
+  ],
+  "firstNodeKeys": [
+    "id",
+    "location",
+    "name",
+    "type",
+  ],
+  "hasScanId": true,
+  "nodeCount": 1,
+  "statsKeys": [
+    "edgesByType",
+    "nodesByType",
+    "totalEdges",
+    "totalNodes",
+  ],
+}
+`;
+
+exports[`API Response Snapshots > should match scan response structure snapshot 1`] = `
+{
+  "configKeys": [
+    "detectTypes",
+    "includeImplicit",
+    "maxDepth",
+    "minConfidence",
+  ],
+  "hasId": true,
+  "hasRepositoryId": true,
+  "status": "completed",
+  "summaryKeys": [
+    "errorCount",
+    "filesAnalyzed",
+    "totalEdges",
+    "totalNodes",
+    "warningCount",
+  ],
+}
+`;
+
+exports[`API Response Snapshots > should match webhook payload structure snapshot 1`] = `
+{
+  "dataKeys": [
+    "repositoryId",
+    "scanId",
+    "summary",
+  ],
+  "eventType": "scan.completed",
+  "hasEventId": true,
+  "version": "1.0",
+}
+`;
+
+exports[`Configuration Snapshots > should match default scan config snapshot 1`] = `
+{
+  "analyzeHelmCharts": true,
+  "detectTypes": [
+    "terraform",
+    "kubernetes",
+    "helm",
+  ],
+  "excludePatterns": [
+    "**/test/**",
+    "**/tests/**",
+    "**/node_modules/**",
+  ],
+  "includeImplicit": true,
+  "includePatterns": [
+    "**/*.tf",
+    "**/*.yaml",
+    "**/*.yml",
+  ],
+  "maxDepth": 10,
+  "minConfidence": 60,
+  "resolveRemoteModules": false,
+}
+`;
+
+exports[`Configuration Snapshots > should match scoring rule config snapshot 1`] = `
+{
+  "explicitDeclarationBonus": 5,
+  "explicitReferenceBase": 90,
+  "heuristicBase": 50,
+  "heuristicOnlyPenalty": -15,
+  "interpolationBase": 80,
+  "maxScore": 100,
+  "minScore": 0,
+  "multipleEvidenceBonus": 10,
+}
+`;
+
+exports[`Evidence Snapshots > should match evidence collection snapshot 1`] = `
+{
+  "aggregatedConfidence": 80,
+  "categoryCount": 1,
+  "hasPrimaryEvidence": true,
+  "itemCount": 3,
+}
+`;
+
+exports[`Evidence Snapshots > should match explicit reference evidence snapshot 1`] = `
+{
+  "category": "syntax",
+  "confidence": 95,
+  "method": "ast_analysis",
+  "type": "explicit_reference",
+}
+`;
+
+exports[`Evidence Snapshots > should match heuristic evidence snapshot 1`] = `
+{
+  "category": "heuristic",
+  "confidence": 55,
+  "method": "rule_engine",
+  "type": "naming_convention",
+}
+`;
+
+exports[`Graph Structure Snapshots > Complete Graph Snapshots > should match complex graph snapshot 1`] = `
+{
+  "edgeCount": 4,
+  "edgeCounts": {
+    "data_reference": 1,
+    "input_variable": 1,
+    "references": 2,
+  },
+  "edgeTypes": [
+    "data_reference",
+    "input_variable",
+    "references",
+    "references",
+  ],
+  "nodeCount": 6,
+  "nodeCounts": {
+    "terraform_data": 1,
+    "terraform_module": 1,
+    "terraform_resource": 3,
+    "terraform_variable": 1,
+  },
+  "nodeIds": [
+    "aws_instance.web",
+    "aws_subnet.public",
+    "aws_vpc.main",
+    "data.aws_ami.latest",
+    "module.rds",
+    "var.env",
+  ],
+}
+`;
+
+exports[`Graph Structure Snapshots > Complete Graph Snapshots > should match simple graph snapshot 1`] = `
+{
+  "edgeCount": 1,
+  "edgeTypes": [
+    "references",
+  ],
+  "nodeCount": 2,
+  "nodeCounts": {
+    "terraform_resource": 2,
+  },
+  "nodeIds": [
+    "aws_subnet.public",
+    "aws_vpc.main",
+  ],
+}
+`;
+
+exports[`Graph Structure Snapshots > Edge Snapshots > should match data reference edge snapshot 1`] = `
+{
+  "id": "edge-3",
+  "label": "ami",
+  "metadata": {
+    "attribute": "id",
+    "confidence": 90,
+    "implicit": false,
+  },
+  "source": "aws_instance.web",
+  "target": "data.aws_ami.latest",
+  "type": "data_reference",
+}
+`;
+
+exports[`Graph Structure Snapshots > Edge Snapshots > should match module call edge snapshot 1`] = `
+{
+  "id": "edge-2",
+  "metadata": {
+    "confidence": 100,
+    "implicit": false,
+  },
+  "source": "aws_instance.web",
+  "target": "module.vpc",
+  "type": "module_call",
+}
+`;
+
+exports[`Graph Structure Snapshots > Edge Snapshots > should match reference edge snapshot 1`] = `
+{
+  "id": "edge-1",
+  "label": "vpc_id",
+  "metadata": {
+    "attribute": "vpc_id",
+    "confidence": 95,
+    "implicit": false,
+  },
+  "source": "aws_subnet.public",
+  "target": "aws_vpc.main",
+  "type": "references",
+}
+`;
+
+exports[`Graph Structure Snapshots > Node Snapshots > should match terraform data node snapshot 1`] = `
+{
+  "dataType": "aws_ami",
+  "id": "data.aws_ami.latest",
+  "name": "latest",
+  "provider": "aws",
+  "type": "terraform_data",
+}
+`;
+
+exports[`Graph Structure Snapshots > Node Snapshots > should match terraform module node snapshot 1`] = `
+{
+  "hasVersion": true,
+  "id": "module.vpc",
+  "name": "vpc",
+  "source": "terraform-aws-modules/vpc/aws",
+  "sourceType": "registry",
+  "type": "terraform_module",
+}
+`;
+
+exports[`Graph Structure Snapshots > Node Snapshots > should match terraform resource node snapshot 1`] = `
+{
+  "dependsOnCount": 0,
+  "hasLocation": true,
+  "id": "aws_vpc.main",
+  "name": "main",
+  "provider": "aws",
+  "resourceType": "aws_vpc",
+  "type": "terraform_resource",
+}
+`;
+
+exports[`Graph Structure Snapshots > Node Snapshots > should match terraform variable node snapshot 1`] = `
+{
+  "hasLocation": true,
+  "id": "var.environment",
+  "name": "environment",
+  "nullable": true,
+  "sensitive": false,
+  "type": "terraform_variable",
+}
+`;
+
+exports[`Parser Output Snapshots > Expression Snapshots > should match array expression snapshot 1`] = `
+{
+  "elementCount": 3,
+  "elementTypes": [
+    "literal",
+    "literal",
+    "literal",
+  ],
+  "type": "array",
+}
+`;
+
+exports[`Parser Output Snapshots > Expression Snapshots > should match function expression snapshot 1`] = `
+{
+  "argCount": 3,
+  "argTypes": [
+    "reference",
+    "literal",
+    "literal",
+  ],
+  "name": "lookup",
+  "type": "function",
+}
+`;
+
+exports[`Parser Output Snapshots > Expression Snapshots > should match reference expression snapshot 1`] = `
+{
+  "parts": [
+    "aws_vpc",
+    "main",
+    "id",
+  ],
+  "raw": "aws_vpc.main.id",
+  "type": "reference",
+}
+`;
+
+exports[`Parser Output Snapshots > Terraform Parser Snapshots > should match VPC resource block snapshot 1`] = `
+{
+  "attributeKeys": [
+    "ami",
+    "cidr_block",
+    "enable_dns_hostnames",
+    "enable_dns_support",
+    "instance_type",
+  ],
+  "labels": [
+    "aws_vpc",
+    "main",
+  ],
+  "type": "resource",
+}
+`;
+
+exports[`Parser Output Snapshots > Terraform Parser Snapshots > should match complex file structure snapshot 1`] = `
+[
+  {
+    "blockCount": 3,
+    "blockLabels": [
+      [
+        "aws_vpc",
+        "main",
+      ],
+      [
+        "aws_subnet",
+        "public",
+      ],
+      [
+        "aws_instance",
+        "web",
+      ],
+    ],
+    "blockTypes": [
+      "resource",
+      "resource",
+      "resource",
+    ],
+    "path": "main.tf",
+  },
+  {
+    "blockCount": 1,
+    "blockLabels": [
+      [
+        "ami_id",
+      ],
+    ],
+    "blockTypes": [
+      "variable",
+    ],
+    "path": "variables.tf",
+  },
+]
+`;
+
+exports[`Parser Output Snapshots > Terraform Parser Snapshots > should match data block snapshot 1`] = `
+{
+  "attributeKeys": [
+    "most_recent",
+    "owners",
+  ],
+  "labels": [
+    "aws_ami",
+    "amazon_linux",
+  ],
+  "type": "data",
+}
+`;
+
+exports[`Parser Output Snapshots > Terraform Parser Snapshots > should match module block snapshot 1`] = `
+{
+  "attributeKeys": [
+    "cidr",
+    "enable_nat_gateway",
+    "source",
+    "version",
+  ],
+  "labels": [
+    "vpc",
+  ],
+  "type": "module",
+}
+`;
+
+exports[`Parser Output Snapshots > Terraform Parser Snapshots > should match module call scenario snapshot 1`] = `
+[
+  {
+    "blockCount": 2,
+    "blockTypes": [
+      "module",
+      "resource",
+    ],
+    "path": "main.tf",
+  },
+]
+`;
+
+exports[`Parser Output Snapshots > Terraform Parser Snapshots > should match output block snapshot 1`] = `
+{
+  "attributeKeys": [
+    "description",
+    "value",
+  ],
+  "labels": [
+    "vpc_id",
+  ],
+  "type": "output",
+}
+`;
+
+exports[`Parser Output Snapshots > Terraform Parser Snapshots > should match variable block snapshot 1`] = `
+{
+  "attributeKeys": [
+    "default",
+    "description",
+    "type",
+  ],
+  "labels": [
+    "environment",
+  ],
+  "type": "variable",
+}
+`;

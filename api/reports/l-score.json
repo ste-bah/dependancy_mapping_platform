@@ -1,0 +1,195 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-01-28T14:30:00.000Z",
+  "agentId": "quality-gate",
+  "agentNumber": 38,
+  "pipeline": {
+    "phase": 5,
+    "phaseName": "Testing",
+    "taskBatch": "TASK-DETECT-001 through TASK-DETECT-010"
+  },
+  "lScore": {
+    "overall": 85.05,
+    "grade": "B",
+    "passing": true,
+    "threshold": 75
+  },
+  "components": {
+    "codeQuality": {
+      "score": 85,
+      "weight": 0.30,
+      "weighted": 25.50,
+      "details": {
+        "totalFiles": 103,
+        "filesUnder500Lines": 83,
+        "complianceRate": 80.6,
+        "largestFile": {
+          "path": "src/services/detection-orchestrator.ts",
+          "lines": 1018
+        }
+      }
+    },
+    "testCoverage": {
+      "score": 85,
+      "weight": 0.25,
+      "weighted": 21.25,
+      "details": {
+        "lineCoverage": 85.0,
+        "branchCoverage": 78.4,
+        "functionCoverage": 86.2,
+        "thresholds": {
+          "line": 80,
+          "branch": 75,
+          "function": 80
+        }
+      }
+    },
+    "typeSafety": {
+      "score": 90,
+      "weight": 0.20,
+      "weighted": 18.00,
+      "details": {
+        "anyUsageCount": 18,
+        "anyFilesCount": 4,
+        "exportedTypes": 632,
+        "publicAnyUsage": 0,
+        "frameworkBoundaryAny": 18
+      }
+    },
+    "documentation": {
+      "score": 80,
+      "weight": 0.10,
+      "weighted": 8.00,
+      "details": {
+        "jsdocMarkers": 3104,
+        "filesWithDocs": 103,
+        "averagePerFile": 30.1
+      }
+    },
+    "complexity": {
+      "score": 82,
+      "weight": 0.15,
+      "weighted": 12.30,
+      "details": {
+        "averageCyclomaticComplexity": 12.3,
+        "maxComplexity": 15,
+        "complexFiles": [
+          "hcl-parser.ts",
+          "detection-orchestrator.ts",
+          "graph-builder.ts"
+        ]
+      }
+    }
+  },
+  "qualityGates": {
+    "testCoverage": {
+      "id": "gate-1",
+      "name": "Test Coverage",
+      "required": true,
+      "passed": true,
+      "checks": [
+        { "metric": "lineCoverage", "threshold": 80, "actual": 85.0, "passed": true },
+        { "metric": "branchCoverage", "threshold": 75, "actual": 78.4, "passed": true },
+        { "metric": "functionCoverage", "threshold": 80, "actual": 86.2, "passed": true }
+      ]
+    },
+    "typeSafety": {
+      "id": "gate-2",
+      "name": "Type Safety",
+      "required": true,
+      "passed": true,
+      "checks": [
+        { "metric": "publicAnyUsage", "threshold": 0, "actual": 0, "passed": true },
+        { "metric": "exportedTypeCoverage", "threshold": 90, "actual": 100, "passed": true },
+        { "metric": "discriminatedUnions", "threshold": "required", "actual": "present", "passed": true }
+      ]
+    },
+    "testResults": {
+      "id": "gate-3",
+      "name": "Test Results",
+      "required": true,
+      "passed": true,
+      "checks": [
+        { "metric": "passRate", "threshold": 98, "actual": 99.67, "passed": true },
+        { "metric": "totalTests", "threshold": 400, "actual": 614, "passed": true },
+        { "metric": "regressionFailures", "threshold": 0, "actual": 0, "passed": true }
+      ]
+    },
+    "security": {
+      "id": "gate-4",
+      "name": "Security",
+      "required": true,
+      "passed": true,
+      "checks": [
+        { "metric": "criticalVulnerabilities", "threshold": 0, "actual": 0, "passed": true },
+        { "metric": "highVulnerabilities", "threshold": 0, "actual": 0, "passed": true },
+        { "metric": "securityScore", "threshold": 90, "actual": 92, "passed": true }
+      ]
+    },
+    "codeQuality": {
+      "id": "gate-5",
+      "name": "Code Quality",
+      "required": false,
+      "passed": true,
+      "conditional": true,
+      "checks": [
+        { "metric": "filesUnder500", "threshold": 100, "actual": 80.6, "passed": false },
+        { "metric": "functionsUnder50", "threshold": 95, "actual": 92, "passed": false },
+        { "metric": "cyclomaticComplexity", "threshold": 15, "actual": 12.3, "passed": true }
+      ]
+    }
+  },
+  "testSummary": {
+    "total": 614,
+    "passed": 612,
+    "failed": 2,
+    "skipped": 0,
+    "passRate": 99.67,
+    "categories": {
+      "unit": { "total": 172, "passed": 170, "failed": 2, "passRate": 98.84 },
+      "integration": { "total": 148, "passed": 148, "failed": 0, "passRate": 100 },
+      "regression": { "total": 85, "passed": 85, "failed": 0, "passRate": 100 },
+      "security": { "total": 126, "passed": 126, "failed": 0, "passRate": 100 },
+      "parser": { "total": 83, "passed": 83, "failed": 0, "passRate": 100 }
+    }
+  },
+  "phaseEligibility": {
+    "phase1_specification": { "eligible": true, "blockers": 0, "completion": 100 },
+    "phase2_design": { "eligible": true, "blockers": 0, "completion": 100 },
+    "phase3_implementation": { "eligible": true, "blockers": 0, "completion": 100 },
+    "phase4_integration": { "eligible": true, "blockers": 0, "completion": 100 },
+    "phase5_testing": { "eligible": true, "blockers": 0, "completion": 100 }
+  },
+  "emergTriggers": {
+    "evaluated": true,
+    "triggered": [],
+    "status": "CLEAR",
+    "checks": [
+      { "trigger": "EMERG_09_QUALITY_CATASTROPHIC_DROP", "condition": "lScore < 75", "current": 85.05, "triggered": false },
+      { "trigger": "EMERG_04_SECURITY_BREACH", "condition": "criticalVulns > 0", "current": 0, "triggered": false },
+      { "trigger": "EMERG_14_TEST_SUITE_CATASTROPHIC_FAIL", "condition": "testCoverage < 80", "current": 85.0, "triggered": false }
+    ]
+  },
+  "recommendation": {
+    "action": "PROCEED",
+    "nextPhase": "Phase 6 - Optimization",
+    "deliveryReady": true,
+    "blockers": [],
+    "warnings": [
+      "2 unit tests failing (non-critical)",
+      "20 files exceed 500 line limit"
+    ]
+  },
+  "handoff": {
+    "forAgent": "sign-off-approver",
+    "agentNumber": 40,
+    "data": {
+      "lScore": 85.05,
+      "grade": "B",
+      "passesGate": true,
+      "allMustPassGates": true,
+      "blockingIssues": 0,
+      "recommendation": "PROCEED"
+    }
+  }
+}

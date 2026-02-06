@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "createdAt": "2024-01-27T00:00:00.000Z",
+  "updatedAt": "2024-01-27T00:00:00.000Z",
+  "hash": "d4e5f6g7h8i9j0k1",
+  "generator": "generate-baselines.ts",
+  "data": {
+    "vpcScenario": {
+      "input": {
+        "files": 2,
+        "blocks": 4,
+        "blockTypes": ["resource", "variable"]
+      },
+      "expectedOutput": {
+        "nodes": 4,
+        "edges": 3,
+        "edgeTypes": ["references", "input_variable"],
+        "minConfidence": 80,
+        "maxConfidence": 100
+      }
+    },
+    "moduleCallScenario": {
+      "input": {
+        "files": 1,
+        "blocks": 2,
+        "blockTypes": ["module", "resource"]
+      },
+      "expectedOutput": {
+        "nodes": 2,
+        "edges": 1,
+        "edgeTypes": ["module_call"],
+        "minConfidence": 90
+      }
+    },
+    "dataSourceScenario": {
+      "input": {
+        "files": 1,
+        "blocks": 2,
+        "blockTypes": ["data", "resource"]
+      },
+      "expectedOutput": {
+        "nodes": 2,
+        "edges": 1,
+        "edgeTypes": ["data_reference"],
+        "minConfidence": 85
+      }
+    }
+  }
+}
