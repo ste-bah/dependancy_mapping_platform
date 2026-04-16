@@ -7,6 +7,7 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import pino from 'pino';
 import { randomUUID } from 'crypto';
+import { Type } from '@sinclair/typebox';
 import {
   AuthTokenResponseSchema,
   RefreshTokenRequestSchema,
@@ -256,7 +257,6 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promise
 
       const response: AuthTokenResponse = {
         accessToken,
-        refreshToken,
         expiresIn: getAccessTokenTTL(),
         tokenType: 'Bearer',
       };
@@ -270,13 +270,13 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promise
    * POST /auth/refresh
    */
   fastify.post<{
-    Body: RefreshTokenRequest;
+    Body?: RefreshTokenRequest;
   }>(
     '/refresh',
     {
       schema: {
         tags: ['Auth'],
-        body: RefreshTokenRequestSchema,
+        body: Type.Optional(RefreshTokenRequestSchema),
         response: {
           200: AuthTokenResponseSchema,
           401: ErrorResponseSchema,
@@ -290,18 +290,23 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promise
       },
     },
     async (request, reply) => {
-      const { refreshToken } = request.body;
+      const refreshToken = request.cookies.refreshToken || request.body?.refreshToken;
+      if (!refreshToken) {
+        throw new UnauthorizedError('Missing refresh token');
+      }
+
+      const sessionId = request.cookies.sessionId;
+      if (!sessionId) {
+        throw new UnauthorizedError('Missing session context');
+      }
 
       // Verify refresh token
       const { userId } = await verifyRefreshToken(refreshToken);
 
       // Check if session exists in Redis (token not revoked)
-      const sessionId = request.cookies.sessionId;
-      if (sessionId) {
-        const session = await getSession(sessionId);
-        if (!session || session.refreshToken !== refreshToken) {
-          throw new UnauthorizedError('Session has been revoked');
-        }
+      const session = await getSession(sessionId);
+      if (!session || session.refreshToken !== refreshToken) {
+        throw new UnauthorizedError('Session has been revoked');
       }
 
       // Fetch user from database
@@ -335,7 +340,6 @@ const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promise
 
       const response: AuthTokenResponse = {
         accessToken,
-        refreshToken, // Return same refresh token
         expiresIn: getAccessTokenTTL(),
         tokenType: 'Bearer',
       };
