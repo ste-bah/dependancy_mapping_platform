@@ -25,22 +25,20 @@ const AUTH_ENDPOINTS = {
 /**
  * Exchange OAuth code for tokens
  * @param code - Authorization code from OAuth callback
+ * @param state - OAuth state parameter for CSRF validation
  */
-export async function exchangeCode(code: string): Promise<AuthTokens> {
+export async function exchangeCode(code: string, state: string): Promise<AuthTokens> {
   const response = await apiClient.get<AuthTokens>(AUTH_ENDPOINTS.CALLBACK, {
-    params: { code },
+    params: { code, state },
   });
   return response.data;
 }
 
 /**
- * Refresh access token
- * @param refreshToken - Current refresh token
+ * Refresh access token using the secure refresh cookie
  */
-export async function refreshToken(refreshToken: string): Promise<AuthTokens> {
-  const response = await apiClient.post<AuthTokens>(AUTH_ENDPOINTS.REFRESH, {
-    refreshToken,
-  });
+export async function refreshToken(): Promise<AuthTokens> {
+  const response = await apiClient.post<AuthTokens>(AUTH_ENDPOINTS.REFRESH, {});
   return response.data;
 }
 
