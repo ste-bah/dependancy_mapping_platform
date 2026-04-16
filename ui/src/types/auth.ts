@@ -39,7 +39,7 @@ export interface UserInfo {
  */
 export interface AuthTokens {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   expiresIn: number;
   tokenType: 'Bearer';
 }
@@ -103,7 +103,7 @@ export interface LoginResponse extends AuthTokens {
  * Refresh token request
  */
 export interface RefreshTokenRequest {
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 /**
@@ -181,7 +181,6 @@ export function hasAuthTokens(value: unknown): value is AuthTokens {
     typeof value === 'object' &&
     value !== null &&
     'accessToken' in value &&
-    'refreshToken' in value &&
     'expiresIn' in value &&
     'tokenType' in value
   );
