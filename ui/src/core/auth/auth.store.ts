@@ -5,7 +5,6 @@
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, AuthState, AuthTokens } from '@/types';
 import { calculateExpiresAt, isTokenExpired } from '@/types';
 import { setTokenCallbacks, clearTokenCallbacks } from '@/core/api';
@@ -46,182 +45,166 @@ const initialState: AuthState = {
   error: null,
 };
 
+let initializePromise: Promise<void> | null = null;
+
 // ============================================================================
 // Store Implementation
 // ============================================================================
 
 /**
- * Auth store with persistence
+ * Auth store keeping access tokens in memory only.
+ * Refresh tokens are expected to be delivered via secure cookies.
  */
-export const useAuthStore = create<AuthStore>()(
-  persist(
-    (set, get) => ({
-      ...initialState,
+export const useAuthStore = create<AuthStore>()((set, get) => ({
+  ...initialState,
 
-      /**
-       * Set authentication tokens
-       */
-      setTokens: (tokens: AuthTokens) => {
-        set({
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          expiresAt: calculateExpiresAt(tokens.expiresIn),
-          isAuthenticated: true,
-          error: null,
-        });
-      },
+  /**
+   * Set authentication tokens
+   */
+  setTokens: (tokens: AuthTokens) => {
+    set((state) => ({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken ?? state.refreshToken,
+      expiresAt: calculateExpiresAt(tokens.expiresIn),
+      isAuthenticated: true,
+      error: null,
+    }));
+  },
 
-      /**
-       * Set current user
-       */
-      setUser: (user: User) => {
-        set({ user });
-      },
+  /**
+   * Set current user
+   */
+  setUser: (user: User) => {
+    set({ user });
+  },
 
-      /**
-       * Set loading state
-       */
-      setLoading: (isLoading: boolean) => {
-        set({ isLoading });
-      },
+  /**
+   * Set loading state
+   */
+  setLoading: (isLoading: boolean) => {
+    set({ isLoading });
+  },
 
-      /**
-       * Set error message
-       */
-      setError: (error: string | null) => {
-        set({ error });
-      },
+  /**
+   * Set error message
+   */
+  setError: (error: string | null) => {
+    set({ error });
+  },
 
-      /**
-       * Initiate GitHub OAuth login
-       */
-      login: () => {
-        const apiUrl = import.meta.env.VITE_API_URL ?? '';
-        window.location.href = `${apiUrl}/auth/github`;
-      },
+  /**
+   * Initiate GitHub OAuth login
+   */
+  login: () => {
+    const apiUrl = import.meta.env.VITE_API_URL ?? '';
+    window.location.href = `${apiUrl}/auth/github`;
+  },
 
-      /**
-       * Logout user
-       */
-      logout: async () => {
-        const { refreshToken } = get();
+  /**
+   * Logout user
+   */
+  logout: async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      // Continue with logout even if API call fails
+      console.error('Logout API error:', error);
+    } finally {
+      clearTokenCallbacks();
+      get().reset();
+    }
+  },
 
-        try {
-          if (refreshToken) {
-            await authService.logout();
-          }
-        } catch (error) {
-          // Continue with logout even if API call fails
-          console.error('Logout API error:', error);
-        } finally {
-          clearTokenCallbacks();
-          get().reset();
-        }
-      },
+  /**
+   * Refresh access token using the refresh cookie
+   */
+  refreshAccessToken: async (): Promise<boolean> => {
+    try {
+      const tokens = await authService.refreshToken();
+      get().setTokens(tokens);
+      return true;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      get().reset();
+      return false;
+    }
+  },
 
-      /**
-       * Refresh access token using refresh token
-       */
-      refreshAccessToken: async (): Promise<boolean> => {
-        const { refreshToken } = get();
+  /**
+   * Get current access token if valid
+   */
+  getAccessToken: (): string | null => {
+    const { accessToken, expiresAt } = get();
 
-        if (!refreshToken) {
-          return false;
-        }
+    if (!accessToken || isTokenExpired(expiresAt)) {
+      return null;
+    }
 
-        try {
-          const tokens = await authService.refreshToken(refreshToken);
-          get().setTokens(tokens);
-          return true;
-        } catch (error) {
-          console.error('Token refresh failed:', error);
-          get().reset();
-          return false;
-        }
-      },
+    return accessToken;
+  },
 
-      /**
-       * Get current access token if valid
-       */
-      getAccessToken: (): string | null => {
-        const { accessToken, expiresAt } = get();
+  /**
+   * Initialize auth state on app start
+   */
+  initialize: async () => {
+    if (initializePromise) {
+      return initializePromise;
+    }
 
-        if (!accessToken || isTokenExpired(expiresAt)) {
-          return null;
-        }
+    initializePromise = (async () => {
+      const store = get();
 
-        return accessToken;
-      },
+      // Set up token callbacks for API client
+      setTokenCallbacks({
+        getAccessToken: store.getAccessToken,
+        refreshToken: store.refreshAccessToken,
+        onAuthError: store.reset,
+      });
 
-      /**
-       * Initialize auth state on app start
-       */
-      initialize: async () => {
-        const store = get();
+      // Check for OAuth callback (tokens in URL or hash)
+      const handled = await handleOAuthCallback(store);
+      if (handled) {
+        return;
+      }
 
-        // Set up token callbacks for API client
-        setTokenCallbacks({
-          getAccessToken: store.getAccessToken,
-          refreshToken: store.refreshAccessToken,
-          onAuthError: store.reset,
-        });
+      const { accessToken, expiresAt } = get();
 
-        // Check for OAuth callback (tokens in URL or hash)
-        const handled = await handleOAuthCallback(store);
-        if (handled) {
-          return;
-        }
-
-        // Check existing session
-        const { accessToken, refreshToken, expiresAt } = store;
-
-        if (!accessToken || !refreshToken) {
+      // Restore the in-memory access token from the refresh cookie when needed
+      if (!accessToken || isTokenExpired(expiresAt)) {
+        const refreshed = await store.refreshAccessToken();
+        if (!refreshed) {
           set({ isLoading: false });
           return;
         }
+      }
 
-        // If token is expired, try to refresh
-        if (isTokenExpired(expiresAt)) {
-          const refreshed = await store.refreshAccessToken();
-          if (!refreshed) {
-            set({ isLoading: false });
-            return;
-          }
-        }
+      // Fetch user profile
+      try {
+        const user = await authService.getCurrentUser();
+        set({ user, isAuthenticated: true, isLoading: false, error: null });
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        store.reset();
+      }
+    })();
 
-        // Fetch user profile
-        try {
-          const user = await authService.getCurrentUser();
-          set({ user, isLoading: false });
-        } catch (error) {
-          console.error('Failed to fetch user:', error);
-          store.reset();
-        }
-      },
-
-      /**
-       * Reset to initial state
-       */
-      reset: () => {
-        set({
-          ...initialState,
-          isLoading: false,
-        });
-      },
-    }),
-    {
-      name: 'code-reviewer-auth',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
-        expiresAt: state.expiresAt,
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-      }),
+    try {
+      await initializePromise;
+    } finally {
+      initializePromise = null;
     }
-  )
-);
+  },
+
+  /**
+   * Reset to initial state
+   */
+  reset: () => {
+    set({
+      ...initialState,
+      isLoading: false,
+    });
+  },
+}));
 
 // ============================================================================
 // OAuth Callback Handler
@@ -241,24 +224,30 @@ async function handleOAuthCallback(store: AuthStore): Promise<boolean> {
     const errorDescription = searchParams.get('error_description') ?? 'Authentication failed';
     store.setError(errorDescription);
     store.setLoading(false);
-    // Clean up URL
     cleanupOAuthUrl();
     return true;
   }
 
   // Check for auth code (server-side flow will handle this)
   const code = searchParams.get('code');
+  const state = searchParams.get('state');
   if (code) {
+    if (!state) {
+      store.setError('Missing OAuth state parameter');
+      store.setLoading(false);
+      cleanupOAuthUrl();
+      return true;
+    }
+
     try {
       store.setLoading(true);
-      const tokens = await authService.exchangeCode(code);
+      const tokens = await authService.exchangeCode(code, state);
       store.setTokens(tokens);
 
       const user = await authService.getCurrentUser();
       store.setUser(user);
       store.setLoading(false);
 
-      // Clean up URL
       cleanupOAuthUrl();
       return true;
     } catch (err) {
@@ -275,10 +264,10 @@ async function handleOAuthCallback(store: AuthStore): Promise<boolean> {
   const refreshToken = searchParams.get('refresh_token');
   const expiresIn = searchParams.get('expires_in');
 
-  if (accessToken && refreshToken && expiresIn) {
+  if (accessToken && expiresIn) {
     store.setTokens({
       accessToken,
-      refreshToken,
+      refreshToken: refreshToken ?? undefined,
       expiresIn: parseInt(expiresIn, 10),
       tokenType: 'Bearer',
     });
