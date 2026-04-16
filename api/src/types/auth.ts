@@ -54,7 +54,7 @@ export type Session = Static<typeof SessionSchema>;
  */
 export const AuthTokenResponseSchema = Type.Object({
   accessToken: Type.String(),
-  refreshToken: Type.String(),
+  refreshToken: Type.Optional(Type.String()),
   expiresIn: Type.Number({ description: 'Access token expiry in seconds' }),
   tokenType: Type.Literal('Bearer'),
 });
@@ -65,7 +65,7 @@ export type AuthTokenResponse = Static<typeof AuthTokenResponseSchema>;
  * Refresh Token Request Schema
  */
 export const RefreshTokenRequestSchema = Type.Object({
-  refreshToken: Type.String(),
+  refreshToken: Type.Optional(Type.String()),
 });
 
 export type RefreshTokenRequest = Static<typeof RefreshTokenRequestSchema>;
