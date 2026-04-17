@@ -84,6 +84,37 @@ const defaultOptions: AppOptions = {
   },
 };
 
+function getCorsOriginConfig(): true | string[] {
+  const configuredOrigins = process.env.CORS_ORIGIN
+    ?.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  if (configuredOrigins && configuredOrigins.length > 0) {
+    return configuredOrigins;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('CORS_ORIGIN must be configured in production when credentials are enabled');
+  }
+
+  return true;
+}
+
+function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+
+  if (secret) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET must be configured in production');
+  }
+
+  return 'development-secret-change-in-production';
+}
+
 /**
  * Create and configure Fastify application instance
  */
@@ -102,7 +133,7 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance> 
   // Register CORS plugin
   if (options.cors) {
     await app.register(cors, {
-      origin: process.env.CORS_ORIGIN || true,
+      origin: getCorsOriginConfig(),
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: [
@@ -127,7 +158,7 @@ export async function buildApp(opts: AppOptions = {}): Promise<FastifyInstance> 
 
   // Register cookie plugin
   await app.register(cookie, {
-    secret: process.env.SESSION_SECRET || 'development-secret-change-in-production',
+    secret: getSessionSecret(),
     parseOptions: {},
   });
   logger.debug('Cookie plugin registered');
