@@ -130,12 +130,29 @@ const tenantContextPlugin: FastifyPluginAsync<TenantContextOptions> = async (
       return;
     }
 
-    const tenantId = request.headers[options.tenantHeader] as string | undefined;
-    const userId = request.headers[options.userHeader] as string | undefined;
+    const headerTenantId = request.headers[options.tenantHeader] as string | undefined;
+    const headerUserId = request.headers[options.userHeader] as string | undefined;
+    const authTenantId = request.auth?.tenantId;
+    const authUserId = request.auth?.userId;
+
+    const tenantId = authTenantId ?? headerTenantId;
+    const userId = authUserId ?? headerUserId;
 
     // Check if tenant ID is required
     if (options.required && !tenantId) {
-      throw new UnauthorizedError(`Missing required header: ${options.tenantHeader}`);
+      throw new UnauthorizedError(
+        authTenantId
+          ? 'Missing tenant context in authenticated session'
+          : `Missing required header: ${options.tenantHeader}`
+      );
+    }
+
+    if (headerTenantId && authTenantId && headerTenantId !== authTenantId) {
+      throw new ForbiddenError('Tenant header does not match authenticated tenant context');
+    }
+
+    if (headerUserId && authUserId && headerUserId !== authUserId) {
+      throw new ForbiddenError('User header does not match authenticated user context');
     }
 
     // Validate tenant ID format if provided
