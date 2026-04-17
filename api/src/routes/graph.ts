@@ -48,10 +48,101 @@ import {
   type TraversalResult,
   type CycleDetectionResult,
   type ImpactAnalysisResult,
+  type GraphNode,
+  type GraphEdge,
 } from './schemas/graph.js';
 import { Type } from '@sinclair/typebox';
+import {
+  createScanId,
+  createTenantId,
+  createDbNodeId,
+  type ScanEntity,
+  type NodeEntity,
+  type EdgeEntity,
+} from '../types/entities.js';
+import { createScanRepository } from '../repositories/scan-repository.js';
+import { createNodeRepository } from '../repositories/node-repository.js';
+import { createEdgeRepository } from '../repositories/edge-repository.js';
+import { createGraphQuerier } from '../repositories/graph-querier.js';
 
 const logger = pino({ name: 'graph-routes' });
+const scanRepository = createScanRepository();
+const nodeRepository = createNodeRepository();
+const edgeRepository = createEdgeRepository();
+const graphQuerier = createGraphQuerier();
+
+function getTenantId(request: { auth?: { tenantId?: string }; tenant?: { tenantId?: string } }): string {
+  const tenantId = request.auth?.tenantId ?? request.tenant?.tenantId;
+  if (!tenantId) {
+    throw new ForbiddenError('Tenant context required');
+  }
+  return tenantId;
+}
+
+async function requireScan(scanId: string, tenantId: string): Promise<ScanEntity> {
+  const scan = await scanRepository.findById(createScanId(scanId), createTenantId(tenantId));
+  if (!scan) {
+    throw new NotFoundError('Scan', scanId);
+  }
+  return scan;
+}
+
+function mapNodeToGraphNode(node: NodeEntity, includeMetadata = true): GraphNode {
+  return {
+    id: node.id,
+    type: node.nodeType,
+    name: node.name,
+    location: {
+      file: node.filePath,
+      lineStart: node.lineStart,
+      lineEnd: node.lineEnd,
+      columnStart: node.columnStart,
+      columnEnd: node.columnEnd,
+    },
+    metadata: includeMetadata ? node.metadata : undefined,
+  };
+}
+
+function mapEdgeToGraphEdge(edge: EdgeEntity): GraphEdge {
+  return {
+    id: edge.id,
+    source: edge.sourceNodeId,
+    target: edge.targetNodeId,
+    type: edge.edgeType,
+    label: edge.label,
+    confidence: edge.confidence,
+    isImplicit: edge.isImplicit,
+    attribute: edge.attribute,
+    metadata: edge.metadata,
+  };
+}
+
+function filterEdgesByTypes(edges: EdgeEntity[], edgeTypes?: string[]): EdgeEntity[] {
+  if (!edgeTypes || edgeTypes.length === 0) {
+    return edges;
+  }
+  const allowed = new Set(edgeTypes);
+  return edges.filter((edge) => allowed.has(edge.edgeType));
+}
+
+function buildRiskLevel(totalImpacted: number): 'low' | 'medium' | 'high' | 'critical' {
+  if (totalImpacted >= 25) {
+    return 'critical';
+  }
+  if (totalImpacted >= 10) {
+    return 'high';
+  }
+  if (totalImpacted >= 4) {
+    return 'medium';
+  }
+  return 'low';
+}
+
+function buildTraversalSubgraph(startNodeId: string, reachableNodes: NodeEntity[], allEdges: EdgeEntity[]): { edges: EdgeEntity[]; nodeIds: Set<string> } {
+  const nodeIds = new Set<string>([startNodeId, ...reachableNodes.map((node) => node.id)]);
+  const edges = allEdges.filter((edge) => nodeIds.has(edge.sourceNodeId) && nodeIds.has(edge.targetNodeId));
+  return { edges, nodeIds };
+}
 
 /**
  * Graph routes plugin
@@ -78,27 +169,41 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
       },
     },
     preHandler: [requireAuth],
-  }, async (request, reply): Promise<GraphResponse> => {
+  }, async (request): Promise<GraphResponse> => {
     const auth = getAuthContext(request);
     const { scanId } = request.params;
     const { includeMetadata = true } = request.query;
 
     logger.debug({ scanId, userId: auth.userId }, 'Getting full graph');
 
-    const tenantId = auth.tenantId;
-    if (!tenantId) {
-      throw new ForbiddenError('Tenant context required');
-    }
+    const tenantId = getTenantId(request);
+    const scan = await requireScan(scanId, tenantId);
 
-    // TODO: Inject graph service and repositories
-    // const scan = await scanRepository.findById(createScanId(scanId), tenantId);
-    // if (!scan) throw new NotFoundError('Scan', scanId);
-    // const nodes = await nodeRepository.findByScan(scanId, tenantId);
-    // const edges = await edgeRepository.findByScan(scanId, tenantId);
-    // const stats = await graphQuerier.getGraphStatistics(scanId, tenantId);
+    const [nodesResult, edgesResult, stats] = await Promise.all([
+      nodeRepository.findByScan(createScanId(scanId), createTenantId(tenantId), undefined, { page: 1, pageSize: 10000 }),
+      edgeRepository.findByScan(createScanId(scanId), createTenantId(tenantId), undefined, { page: 1, pageSize: 10000 }),
+      graphQuerier.getGraphStatistics(createScanId(scanId), createTenantId(tenantId)),
+    ]);
 
-    // Mock response structure
-    throw new NotFoundError('Scan', scanId);
+    return {
+      scanId,
+      nodes: nodesResult.data.map((node) => mapNodeToGraphNode(node, includeMetadata)),
+      edges: edgesResult.data.map(mapEdgeToGraphEdge),
+      stats: {
+        totalNodes: stats.nodeCount,
+        totalEdges: stats.edgeCount,
+        nodesByType: await nodeRepository.getCountsByType(createScanId(scanId), createTenantId(tenantId)),
+        edgesByType: await edgeRepository.getCountsByType(createScanId(scanId), createTenantId(tenantId)),
+        avgEdgesPerNode: stats.nodeCount > 0 ? Number((stats.edgeCount / stats.nodeCount).toFixed(2)) : 0,
+        density: stats.nodeCount > 1 ? Number((stats.edgeCount / (stats.nodeCount * (stats.nodeCount - 1))).toFixed(4)) : 0,
+        hasCycles: stats.hasCycles,
+      },
+      metadata: includeMetadata ? {
+        ref: scan.ref,
+        commitSha: scan.commitSha,
+        generatedAt: new Date().toISOString(),
+      } : undefined,
+    };
   });
 
   /**
@@ -120,7 +225,7 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
       },
     },
     preHandler: [requireAuth],
-  }, async (request, reply): Promise<NodeListResponse> => {
+  }, async (request): Promise<NodeListResponse> => {
     const auth = getAuthContext(request);
     const { scanId } = request.params;
     const {
@@ -135,22 +240,24 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
 
     logger.debug({ scanId, userId: auth.userId, type, page }, 'Listing nodes');
 
-    const tenantId = auth.tenantId;
-    if (!tenantId) {
-      throw new ForbiddenError('Tenant context required');
-    }
+    const tenantId = getTenantId(request);
+    await requireScan(scanId, tenantId);
 
-    // Parse comma-separated types if provided
     const nodeTypes = types ? types.split(',').map(t => t.trim()) : (type ? [type] : undefined);
+    const result = await nodeRepository.findByScan(
+      createScanId(scanId),
+      createTenantId(tenantId),
+      {
+        nodeType: nodeTypes,
+        filePath: search || filePath,
+        name: search || name,
+      },
+      { page, pageSize }
+    );
 
-    // TODO: Inject node repository
-    // const filter = { nodeType: nodeTypes, filePath, name };
-    // const result = await nodeRepository.findByScan(scanId, tenantId, filter, { page, pageSize });
-
-    // Mock response
     return {
-      data: [],
-      pagination: createPaginationInfo(page, pageSize, 0),
+      data: result.data.map((node) => mapNodeToGraphNode(node, true)),
+      pagination: createPaginationInfo(page, pageSize, result.total),
     };
   });
 
@@ -171,24 +278,44 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
       },
     },
     preHandler: [requireAuth],
-  }, async (request, reply): Promise<NodeDetail> => {
+  }, async (request): Promise<NodeDetail> => {
     const auth = getAuthContext(request);
     const { scanId, nodeId } = request.params;
 
     logger.debug({ scanId, nodeId, userId: auth.userId }, 'Getting node details');
 
-    const tenantId = auth.tenantId;
-    if (!tenantId) {
-      throw new ForbiddenError('Tenant context required');
+    const tenantId = getTenantId(request);
+    await requireScan(scanId, tenantId);
+
+    const node = await nodeRepository.findById(createDbNodeId(nodeId), createTenantId(tenantId));
+    if (!node || node.scanId !== scanId) {
+      throw new NotFoundError('Node', nodeId);
     }
 
-    // TODO: Inject repositories
-    // const node = await nodeRepository.findById(nodeId, tenantId);
-    // if (!node || node.scanId !== scanId) throw new NotFoundError('Node', nodeId);
-    // const incomingEdges = await edgeRepository.findByTarget(scanId, tenantId, nodeId);
-    // const outgoingEdges = await edgeRepository.findBySource(scanId, tenantId, nodeId);
+    const [incomingEdges, outgoingEdges] = await Promise.all([
+      edgeRepository.findByTarget(createScanId(scanId), createTenantId(tenantId), createDbNodeId(nodeId)),
+      edgeRepository.findBySource(createScanId(scanId), createTenantId(tenantId), createDbNodeId(nodeId)),
+    ]);
 
-    throw new NotFoundError('Node', nodeId);
+    return {
+      node: mapNodeToGraphNode(node, true),
+      incomingEdges: incomingEdges.map((edge) => ({
+        id: edge.id,
+        source: edge.sourceNodeId,
+        type: edge.edgeType,
+        label: edge.label,
+        confidence: edge.confidence,
+      })),
+      outgoingEdges: outgoingEdges.map((edge) => ({
+        id: edge.id,
+        target: edge.targetNodeId,
+        type: edge.edgeType,
+        label: edge.label,
+        confidence: edge.confidence,
+      })),
+      dependencyCount: outgoingEdges.length,
+      dependentCount: incomingEdges.length,
+    };
   });
 
   /**
@@ -199,7 +326,7 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
     Querystring: TraversalQuery;
   }>('/nodes/:nodeId/dependencies', {
     schema: {
-      description: 'Get downstream dependencies (nodes that depend on this node)',
+      description: 'Get downstream dependencies for a node',
       tags: ['Graph'],
       params: NodeIdParamSchema,
       querystring: TraversalQuerySchema,
@@ -210,25 +337,61 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
       },
     },
     preHandler: [requireAuth],
-  }, async (request, reply): Promise<TraversalResult> => {
+  }, async (request): Promise<TraversalResult> => {
     const auth = getAuthContext(request);
     const { scanId, nodeId } = request.params;
     const { maxDepth = 5, edgeTypes, includeMetadata = true } = request.query;
 
     logger.debug({ scanId, nodeId, maxDepth, userId: auth.userId }, 'Getting downstream dependencies');
 
-    const tenantId = auth.tenantId;
-    if (!tenantId) {
-      throw new ForbiddenError('Tenant context required');
+    const tenantId = getTenantId(request);
+    await requireScan(scanId, tenantId);
+
+    const startNode = await nodeRepository.findById(createDbNodeId(nodeId), createTenantId(tenantId));
+    if (!startNode || startNode.scanId !== scanId) {
+      throw new NotFoundError('Node', nodeId);
     }
 
-    // Parse edge types
-    const edgeTypeFilter = edgeTypes ? edgeTypes.split(',').map(t => t.trim()) : undefined;
+    const reachableNodes = await graphQuerier.getDownstreamDependencies(
+      createScanId(scanId),
+      createTenantId(tenantId),
+      createDbNodeId(nodeId),
+      maxDepth
+    );
 
-    // TODO: Inject graph querier
-    // const result = await graphQuerier.getDownstreamDependencies(scanId, tenantId, nodeId, maxDepth);
+    const allEdges = await edgeRepository.findByScan(
+      createScanId(scanId),
+      createTenantId(tenantId),
+      undefined,
+      { page: 1, pageSize: 10000 }
+    );
+    const { edges: subgraphEdges } = buildTraversalSubgraph(nodeId, reachableNodes, allEdges.data);
+    const filteredEdges = filterEdgesByTypes(subgraphEdges, edgeTypes ? edgeTypes.split(',').map((t) => t.trim()) : undefined);
 
-    throw new NotFoundError('Node', nodeId);
+    const paths = await Promise.all(
+      reachableNodes.slice(0, 25).map(async (node) => {
+        const path = await graphQuerier.findShortestPath(
+          createScanId(scanId),
+          createTenantId(tenantId),
+          createDbNodeId(nodeId),
+          createDbNodeId(node.id)
+        );
+        return path ? { nodeIds: path.nodes, length: path.length } : null;
+      })
+    );
+
+    return {
+      startNode: nodeId,
+      direction: 'downstream',
+      nodes: reachableNodes.map((node) => mapNodeToGraphNode(node, includeMetadata)),
+      edges: filteredEdges.map(mapEdgeToGraphEdge),
+      paths: paths.filter((path): path is { nodeIds: string[]; length: number } => path !== null),
+      stats: {
+        nodesVisited: reachableNodes.length,
+        edgesTraversed: filteredEdges.length,
+        maxDepthReached: paths.reduce((max, path) => Math.max(max, path?.length ?? 0), 0),
+      },
+    };
   });
 
   /**
@@ -239,7 +402,7 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
     Querystring: TraversalQuery;
   }>('/nodes/:nodeId/dependents', {
     schema: {
-      description: 'Get upstream dependents (nodes that this node depends on)',
+      description: 'Get upstream dependents for a node',
       tags: ['Graph'],
       params: NodeIdParamSchema,
       querystring: TraversalQuerySchema,
@@ -250,22 +413,61 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
       },
     },
     preHandler: [requireAuth],
-  }, async (request, reply): Promise<TraversalResult> => {
+  }, async (request): Promise<TraversalResult> => {
     const auth = getAuthContext(request);
     const { scanId, nodeId } = request.params;
     const { maxDepth = 5, edgeTypes, includeMetadata = true } = request.query;
 
     logger.debug({ scanId, nodeId, maxDepth, userId: auth.userId }, 'Getting upstream dependents');
 
-    const tenantId = auth.tenantId;
-    if (!tenantId) {
-      throw new ForbiddenError('Tenant context required');
+    const tenantId = getTenantId(request);
+    await requireScan(scanId, tenantId);
+
+    const startNode = await nodeRepository.findById(createDbNodeId(nodeId), createTenantId(tenantId));
+    if (!startNode || startNode.scanId !== scanId) {
+      throw new NotFoundError('Node', nodeId);
     }
 
-    // TODO: Inject graph querier
-    // const result = await graphQuerier.getUpstreamDependents(scanId, tenantId, nodeId, maxDepth);
+    const reachableNodes = await graphQuerier.getUpstreamDependents(
+      createScanId(scanId),
+      createTenantId(tenantId),
+      createDbNodeId(nodeId),
+      maxDepth
+    );
 
-    throw new NotFoundError('Node', nodeId);
+    const allEdges = await edgeRepository.findByScan(
+      createScanId(scanId),
+      createTenantId(tenantId),
+      undefined,
+      { page: 1, pageSize: 10000 }
+    );
+    const { edges: subgraphEdges } = buildTraversalSubgraph(nodeId, reachableNodes, allEdges.data);
+    const filteredEdges = filterEdgesByTypes(subgraphEdges, edgeTypes ? edgeTypes.split(',').map((t) => t.trim()) : undefined);
+
+    const paths = await Promise.all(
+      reachableNodes.slice(0, 25).map(async (node) => {
+        const path = await graphQuerier.findShortestPath(
+          createScanId(scanId),
+          createTenantId(tenantId),
+          createDbNodeId(node.id),
+          createDbNodeId(nodeId)
+        );
+        return path ? { nodeIds: path.nodes, length: path.length } : null;
+      })
+    );
+
+    return {
+      startNode: nodeId,
+      direction: 'upstream',
+      nodes: reachableNodes.map((node) => mapNodeToGraphNode(node, includeMetadata)),
+      edges: filteredEdges.map(mapEdgeToGraphEdge),
+      paths: paths.filter((path): path is { nodeIds: string[]; length: number } => path !== null),
+      stats: {
+        nodesVisited: reachableNodes.length,
+        edgesTraversed: filteredEdges.length,
+        maxDepthReached: paths.reduce((max, path) => Math.max(max, path?.length ?? 0), 0),
+      },
+    };
   });
 
   /**
@@ -287,7 +489,7 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
       },
     },
     preHandler: [requireAuth],
-  }, async (request, reply): Promise<EdgeListResponse> => {
+  }, async (request): Promise<EdgeListResponse> => {
     const auth = getAuthContext(request);
     const { scanId } = request.params;
     const {
@@ -301,21 +503,24 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
 
     logger.debug({ scanId, userId: auth.userId, type, page }, 'Listing edges');
 
-    const tenantId = auth.tenantId;
-    if (!tenantId) {
-      throw new ForbiddenError('Tenant context required');
-    }
+    const tenantId = getTenantId(request);
+    await requireScan(scanId, tenantId);
 
-    // Parse comma-separated types
     const edgeTypes = types ? types.split(',').map(t => t.trim()) : (type ? [type] : undefined);
-
-    // TODO: Inject edge repository
-    // const filter = { edgeType: edgeTypes, minConfidence, isImplicit };
-    // const result = await edgeRepository.findByScan(scanId, tenantId, filter, { page, pageSize });
+    const result = await edgeRepository.findByScan(
+      createScanId(scanId),
+      createTenantId(tenantId),
+      {
+        edgeType: edgeTypes,
+        minConfidence,
+        isImplicit,
+      },
+      { page, pageSize }
+    );
 
     return {
-      data: [],
-      pagination: createPaginationInfo(page, pageSize, 0),
+      data: result.data.map(mapEdgeToGraphEdge),
+      pagination: createPaginationInfo(page, pageSize, result.total),
     };
   });
 
@@ -336,28 +541,30 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
       },
     },
     preHandler: [requireAuth],
-  }, async (request, reply): Promise<CycleDetectionResult> => {
+  }, async (request): Promise<CycleDetectionResult> => {
     const auth = getAuthContext(request);
     const { scanId } = request.params;
 
     logger.debug({ scanId, userId: auth.userId }, 'Detecting cycles');
 
-    const tenantId = auth.tenantId;
-    if (!tenantId) {
-      throw new ForbiddenError('Tenant context required');
-    }
+    const tenantId = getTenantId(request);
+    await requireScan(scanId, tenantId);
 
-    // TODO: Inject graph querier
-    // const result = await graphQuerier.detectCycles(scanId, tenantId);
+    const startedAt = Date.now();
+    const cycles = await graphQuerier.detectCycles(createScanId(scanId), createTenantId(tenantId));
+    const nodeIds = new Set(cycles.flatMap((cycle) => cycle.nodes));
 
-    // Mock response - would come from graph querier
     return {
-      hasCycles: false,
-      cycles: [],
+      hasCycles: cycles.length > 0,
+      cycles: cycles.map((cycle) => ({
+        nodeIds: cycle.nodes,
+        edgeIds: cycle.edges,
+        length: cycle.nodes.length,
+      })),
       stats: {
-        cyclesFound: 0,
-        nodesInCycles: 0,
-        detectionTimeMs: 0,
+        cyclesFound: cycles.length,
+        nodesInCycles: nodeIds.size,
+        detectionTimeMs: Date.now() - startedAt,
       },
     };
   });
@@ -384,31 +591,82 @@ const graphRoutes: FastifyPluginAsync = async (fastify: FastifyInstance): Promis
       },
     },
     preHandler: [requireAuth],
-  }, async (request, reply): Promise<ImpactAnalysisResult> => {
+  }, async (request): Promise<ImpactAnalysisResult> => {
     const auth = getAuthContext(request);
     const { scanId } = request.params;
     const { nodeIds, maxDepth = 10 } = request.body;
 
     logger.debug({ scanId, nodeIds, maxDepth, userId: auth.userId }, 'Analyzing impact');
 
-    const tenantId = auth.tenantId;
-    if (!tenantId) {
-      throw new ForbiddenError('Tenant context required');
+    const tenantId = getTenantId(request);
+    await requireScan(scanId, tenantId);
+
+    const allResults = await Promise.all(
+      nodeIds.map(async (nodeId) => {
+        const node = await nodeRepository.findById(createDbNodeId(nodeId), createTenantId(tenantId));
+        if (!node || node.scanId !== scanId) {
+          throw new NotFoundError('Node', nodeId);
+        }
+        return graphQuerier.analyzeImpact(
+          createScanId(scanId),
+          createTenantId(tenantId),
+          createDbNodeId(nodeId),
+          maxDepth
+        );
+      })
+    );
+
+    const directImpactMap = new Map<string, NodeEntity>();
+    const transitiveImpactMap = new Map<string, NodeEntity>();
+    const impactByType: Record<string, number> = {};
+    const impactByDepth: Record<string, number> = {};
+
+    for (const result of allResults) {
+      for (const node of result.directDependents) {
+        directImpactMap.set(node.id, node);
+      }
+      for (const node of result.transitiveDependents) {
+        transitiveImpactMap.set(node.id, node);
+      }
     }
 
-    // TODO: Inject graph querier/service
-    // const result = await graphService.analyzeImpact(graph, nodeIds);
+    const allImpactedNodes = [...directImpactMap.values(), ...transitiveImpactMap.values()];
+    for (const node of allImpactedNodes) {
+      impactByType[node.nodeType] = (impactByType[node.nodeType] ?? 0) + 1;
+    }
 
-    // Mock response
+    for (const node of directImpactMap.values()) {
+      impactByDepth['1'] = (impactByDepth['1'] ?? 0) + 1;
+    }
+
+    for (const node of transitiveImpactMap.values()) {
+      let shortestDepth = maxDepth;
+      for (const targetNodeId of nodeIds) {
+        const path = await graphQuerier.findShortestPath(
+          createScanId(scanId),
+          createTenantId(tenantId),
+          createDbNodeId(node.id),
+          createDbNodeId(targetNodeId)
+        );
+        if (path) {
+          shortestDepth = Math.min(shortestDepth, path.length);
+        }
+      }
+      const key = String(shortestDepth);
+      impactByDepth[key] = (impactByDepth[key] ?? 0) + 1;
+    }
+
+    const totalImpacted = directImpactMap.size + transitiveImpactMap.size;
+
     return {
       targetNodes: nodeIds,
-      directImpact: [],
-      transitiveImpact: [],
+      directImpact: [...directImpactMap.values()].map((node) => mapNodeToGraphNode(node, true)),
+      transitiveImpact: [...transitiveImpactMap.values()].map((node) => mapNodeToGraphNode(node, true)),
       summary: {
-        totalImpacted: 0,
-        impactByType: {},
-        impactByDepth: {},
-        riskLevel: 'low',
+        totalImpacted,
+        impactByType,
+        impactByDepth,
+        riskLevel: buildRiskLevel(totalImpacted),
       },
     };
   });
