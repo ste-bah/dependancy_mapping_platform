@@ -7,419 +7,248 @@ description: Complete reference for all DMP API endpoints
 
 # API Endpoints
 
-This document provides a complete reference for all Dependency Mapping Platform API endpoints.
+This document provides a reference for the currently implemented Dependency Mapping Platform API endpoints.
 
 ## Base URL
 
-```
+```text
 https://api.code-reviewer.io/api/v1
 ```
 
-All endpoints require authentication. See [Authentication](/api/authentication) for details.
+Most endpoints require authentication. See [Authentication](/api/authentication) for details.
 
 ## Repositories
 
-### List Repositories
+### GET /repositories
 
-<span class="api-method api-method--get">GET</span> `/repositories`
+Returns repositories accessible to the authenticated user through the configured Git provider integration.
 
-Returns a paginated list of repositories for the current tenant.
+### GET /repositories/{owner}/{name}
 
-**Query Parameters:**
+Get repository details from the connected provider.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | integer | 1 | Page number |
-| `pageSize` | integer | 20 | Items per page (max 100) |
-| `provider` | string | - | Filter by provider (github, gitlab, bitbucket) |
-| `search` | string | - | Search by repository name |
-| `isActive` | boolean | - | Filter by active status |
+### POST /repositories/{owner}/{name}/clone
 
-**Response:**
+Clone a repository archive into platform storage.
 
-```json
-{
-  "data": [
-    {
-      "id": "repo_abc123",
-      "provider": "github",
-      "owner": "my-org",
-      "name": "infrastructure",
-      "defaultBranch": "main",
-      "isActive": true,
-      "lastScanAt": "2026-02-05T10:30:00Z",
-      "createdAt": "2026-01-15T08:00:00Z"
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "pageSize": 20,
-    "total": 45,
-    "totalPages": 3
-  }
-}
-```
+### POST /repositories/{owner}/{name}/webhook
 
-### Create Repository
-
-<span class="api-method api-method--post">POST</span> `/repositories`
-
-Add a new repository for tracking.
-
-**Request Body:**
-
-```json
-{
-  "provider": "github",
-  "owner": "my-org",
-  "name": "infrastructure",
-  "defaultBranch": "main",
-  "webhookEnabled": true
-}
-```
-
-**Response:** `201 Created`
-
-```json
-{
-  "id": "repo_abc123",
-  "provider": "github",
-  "owner": "my-org",
-  "name": "infrastructure",
-  "defaultBranch": "main",
-  "isActive": true,
-  "webhookSecret": "whsec_...",
-  "createdAt": "2026-02-05T10:30:00Z"
-}
-```
-
-### Get Repository
-
-<span class="api-method api-method--get">GET</span> `/repositories/{repositoryId}`
-
-Get a single repository by ID.
-
-### Update Repository
-
-<span class="api-method api-method--put">PUT</span> `/repositories/{repositoryId}`
-
-Update repository settings.
-
-**Request Body:**
-
-```json
-{
-  "defaultBranch": "main",
-  "isActive": true,
-  "scanConfig": {
-    "includePatterns": ["**/*.tf", "**/*.hcl"],
-    "excludePatterns": ["**/node_modules/**"]
-  }
-}
-```
-
-### Delete Repository
-
-<span class="api-method api-method--delete">DELETE</span> `/repositories/{repositoryId}`
-
-Remove a repository from tracking. This does not delete scan history.
+Register a provider webhook for repository events.
 
 ## Scans
 
-### List Scans
+### GET /scans
 
-<span class="api-method api-method--get">GET</span> `/scans`
+Returns a paginated list of scans for the current tenant.
 
-Returns a paginated list of scans.
-
-**Query Parameters:**
+Query parameters:
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `repositoryId` | string | Filter by repository |
-| `status` | string | Filter by status (pending, completed, failed) |
-| `branch` | string | Filter by branch |
-| `startDate` | string | Filter scans after this date (ISO 8601) |
-| `endDate` | string | Filter scans before this date (ISO 8601) |
+| `repositoryId` | string | Filter by repository UUID |
+| `status` | string | Filter by scan status |
+| `since` | string | Filter by start date (ISO 8601) |
+| `until` | string | Filter by end date (ISO 8601) |
+| `page` | integer | Page number |
+| `pageSize` | integer | Items per page |
 
-### Create Scan
+### POST /scans
 
-<span class="api-method api-method--post">POST</span> `/scans`
+Create a persisted scan record for a repository.
 
-Trigger a new scan for a repository.
-
-**Request Body:**
-
-```json
-{
-  "repositoryId": "repo_abc123",
-  "branch": "main",
-  "commitSha": "abc123def456"
-}
-```
-
-**Response:** `202 Accepted`
+Request body:
 
 ```json
 {
-  "id": "scan_xyz789",
-  "repositoryId": "repo_abc123",
-  "status": "pending",
-  "branch": "main",
-  "commitSha": "abc123def456",
-  "createdAt": "2026-02-05T10:30:00Z"
-}
-```
-
-### Get Scan
-
-<span class="api-method api-method--get">GET</span> `/scans/{scanId}`
-
-Get scan details including results if completed.
-
-**Response:**
-
-```json
-{
-  "id": "scan_xyz789",
-  "repositoryId": "repo_abc123",
-  "status": "completed",
-  "branch": "main",
-  "commitSha": "abc123def456",
-  "nodeCount": 150,
-  "edgeCount": 280,
-  "startedAt": "2026-02-05T10:30:00Z",
-  "completedAt": "2026-02-05T10:31:15Z",
-  "metrics": {
-    "parseTimeMs": 5200,
-    "indexTimeMs": 1800
+  "repositoryId": "00000000-0000-0000-0000-000000000001",
+  "ref": "main",
+  "config": {
+    "detectTypes": ["terraform", "kubernetes", "helm"],
+    "includeImplicit": true,
+    "minConfidence": 40,
+    "maxDepth": 10
   }
 }
 ```
 
-### Get Scan Status
-
-<span class="api-method api-method--get">GET</span> `/scans/{scanId}/status`
-
-Get real-time scan status for polling.
-
-**Response:**
+Response:
 
 ```json
 {
-  "status": "analyzing",
-  "progress": 65,
-  "currentStep": "Parsing Terraform files",
-  "estimatedCompletionTime": "2026-02-05T10:31:00Z"
+  "id": "00000000-0000-0000-0000-000000000010",
+  "repositoryId": "00000000-0000-0000-0000-000000000001",
+  "status": "pending",
+  "ref": "main",
+  "commitSha": "0000000000000000000000000000000000000000",
+  "config": {
+    "detectTypes": ["terraform", "kubernetes", "helm"],
+    "includeImplicit": true,
+    "minConfidence": 40,
+    "maxDepth": 10
+  },
+  "progress": {
+    "phase": "initializing",
+    "percentage": 0,
+    "filesProcessed": 0,
+    "totalFiles": 0,
+    "nodesDetected": 0,
+    "edgesDetected": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "createdAt": "2026-04-17T12:00:00.000Z",
+  "updatedAt": "2026-04-17T12:00:00.000Z"
 }
 ```
 
-### Cancel Scan
+### GET /scans/{scanId}
 
-<span class="api-method api-method--delete">DELETE</span> `/scans/{scanId}`
+Get the full persisted scan record.
 
-Cancel a pending or in-progress scan.
+### GET /scans/{scanId}/status
+
+Get a lightweight status payload for polling.
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000010",
+  "status": "running",
+  "progress": {
+    "phase": "parsing",
+    "percentage": 42,
+    "filesProcessed": 21,
+    "totalFiles": 50,
+    "nodesDetected": 120,
+    "edgesDetected": 185,
+    "errors": 0,
+    "warnings": 2
+  },
+  "startedAt": "2026-04-17T12:00:05.000Z",
+  "estimatedTimeRemaining": 18
+}
+```
+
+### DELETE /scans/{scanId}
+
+Cancel a pending, queued, or running scan.
+
+```json
+{
+  "reason": "Cancelled by user"
+}
+```
 
 ## Graph
 
 All graph endpoints are scoped to a specific scan.
 
-### Get Full Graph
+### GET /scans/{scanId}/graph
 
-<span class="api-method api-method--get">GET</span> `/scans/{scanId}/graph`
+Get the full persisted graph for a scan.
 
-Get the complete dependency graph for a scan.
-
-**Query Parameters:**
+Query parameters:
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `maxDepth` | integer | Maximum traversal depth |
-| `nodeTypes` | string | Comma-separated node types to include |
-| `search` | string | Filter nodes by name |
-
-**Response:**
+| `includeMetadata` | boolean | Include node and scan metadata |
 
 ```json
 {
+  "scanId": "00000000-0000-0000-0000-000000000010",
   "nodes": [
     {
-      "id": "node_001",
+      "id": "00000000-0000-0000-0000-000000000100",
+      "type": "tf_resource",
       "name": "aws_vpc.main",
-      "type": "terraform_resource",
       "location": {
-        "filePath": "network/vpc.tf",
-        "startLine": 1,
-        "endLine": 15
+        "file": "network/vpc.tf",
+        "lineStart": 1,
+        "lineEnd": 15
       },
       "metadata": {
-        "provider": "aws",
-        "resourceType": "aws_vpc"
+        "provider": "aws"
       }
     }
   ],
   "edges": [
     {
-      "id": "edge_001",
-      "sourceNodeId": "node_002",
-      "targetNodeId": "node_001",
-      "type": "DEPENDS_ON",
-      "confidence": 1.0
+      "id": "00000000-0000-0000-0000-000000000200",
+      "source": "00000000-0000-0000-0000-000000000101",
+      "target": "00000000-0000-0000-0000-000000000100",
+      "type": "references",
+      "confidence": 95,
+      "isImplicit": false
     }
   ],
+  "stats": {
+    "totalNodes": 150,
+    "totalEdges": 280,
+    "nodesByType": {
+      "tf_resource": 120
+    },
+    "edgesByType": {
+      "references": 180
+    },
+    "avgEdgesPerNode": 1.87,
+    "density": 0.0125,
+    "hasCycles": false
+  },
   "metadata": {
-    "scanId": "scan_xyz789",
-    "nodeCount": 150,
-    "edgeCount": 280
+    "ref": "main",
+    "commitSha": "abc123def456",
+    "generatedAt": "2026-04-17T12:10:00.000Z"
   }
 }
 ```
 
-### List Nodes
+### GET /scans/{scanId}/nodes
 
-<span class="api-method api-method--get">GET</span> `/scans/{scanId}/nodes`
+List nodes for a scan with pagination and filtering.
 
-Get a paginated list of nodes with filtering.
-
-**Query Parameters:**
+Query parameters:
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `type` | string | Filter by node type |
-| `search` | string | Search by name (fuzzy matching) |
+| `types` | string | Comma-separated node types |
+| `search` | string | Search by name or file path |
 | `filePath` | string | Filter by file path |
+| `name` | string | Filter by name |
 | `page` | integer | Page number |
 | `pageSize` | integer | Items per page |
 
-### Get Node Details
+### GET /scans/{scanId}/nodes/{nodeId}
 
-<span class="api-method api-method--get">GET</span> `/scans/{scanId}/nodes/{nodeId}`
+Get node details plus incoming and outgoing edges.
 
-Get detailed information about a specific node.
+### GET /scans/{scanId}/nodes/{nodeId}/dependencies
 
-**Response:**
+Traverse downstream dependencies from a node.
+
+### GET /scans/{scanId}/nodes/{nodeId}/dependents
+
+Traverse upstream dependents towards a node.
+
+### GET /scans/{scanId}/edges
+
+List edges for a scan with pagination and filtering.
+
+### GET /scans/{scanId}/cycles
+
+Detect cycles in the persisted dependency graph.
+
+### POST /scans/{scanId}/impact
+
+Analyze the impact of changing one or more node IDs.
 
 ```json
 {
-  "id": "node_001",
-  "name": "aws_vpc.main",
-  "type": "terraform_resource",
-  "location": {
-    "filePath": "network/vpc.tf",
-    "startLine": 1,
-    "endLine": 15
-  },
-  "metadata": {
-    "provider": "aws",
-    "resourceType": "aws_vpc",
-    "attributes": {
-      "cidr_block": "10.0.0.0/16",
-      "enable_dns_support": true
-    }
-  },
-  "dependencies": [
-    {
-      "id": "node_010",
-      "name": "data.aws_availability_zones.available",
-      "type": "terraform_data_source"
-    }
+  "nodeIds": [
+    "00000000-0000-0000-0000-000000000100"
   ],
-  "dependents": [
-    {
-      "id": "node_002",
-      "name": "aws_subnet.public",
-      "type": "terraform_resource"
-    }
-  ]
+  "maxDepth": 10
 }
 ```
-
-### Get Node Dependencies
-
-<span class="api-method api-method--get">GET</span> `/scans/{scanId}/nodes/{nodeId}/dependencies`
-
-Get all resources that this node depends on (downstream).
-
-### Get Node Dependents
-
-<span class="api-method api-method--get">GET</span> `/scans/{scanId}/nodes/{nodeId}/dependents`
-
-Get all resources that depend on this node (upstream).
-
-### Get Blast Radius
-
-<span class="api-method api-method--get">GET</span> `/scans/{scanId}/nodes/{nodeId}/blast-radius`
-
-Calculate the blast radius for a node.
-
-**Response:**
-
-```json
-{
-  "nodeId": "node_001",
-  "directDependents": 5,
-  "transitiveDependents": 12,
-  "impactScore": 0.65,
-  "severity": "high",
-  "affectedNodes": [
-    {
-      "id": "node_002",
-      "name": "aws_subnet.public",
-      "type": "terraform_resource",
-      "isDirect": true,
-      "depth": 1
-    }
-  ]
-}
-```
-
-### Impact Analysis
-
-<span class="api-method api-method--post">POST</span> `/scans/{scanId}/impact`
-
-Analyze impact of changes to multiple files.
-
-**Request Body:**
-
-```json
-{
-  "filePaths": [
-    "network/vpc.tf",
-    "network/subnets.tf"
-  ]
-}
-```
-
-**Response:**
-
-```json
-{
-  "totalAffectedNodes": 25,
-  "maxImpactScore": 0.72,
-  "files": [
-    {
-      "filePath": "network/vpc.tf",
-      "nodes": 3,
-      "impactScore": 0.72
-    }
-  ],
-  "affectedNodes": [...]
-}
-```
-
-## Webhooks
-
-### GitHub Webhook
-
-<span class="api-method api-method--post">POST</span> `/webhooks/github`
-
-Receive GitHub push events. Used by GitHub webhook configuration.
-
-### GitLab Webhook
-
-<span class="api-method api-method--post">POST</span> `/webhooks/gitlab`
-
-Receive GitLab push events. Used by GitLab webhook configuration.
 
 ## Error Responses
 
@@ -431,6 +260,7 @@ All endpoints may return the following error responses:
 | 401 | `AUTH_REQUIRED` | Authentication required |
 | 403 | `FORBIDDEN` | Insufficient permissions |
 | 404 | `NOT_FOUND` | Resource not found |
+| 409 | `CONFLICT` | Resource state conflict |
 | 429 | `RATE_LIMITED` | Too many requests |
 | 500 | `INTERNAL_ERROR` | Server error |
 
