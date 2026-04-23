@@ -25,11 +25,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install API dependencies
+        run: npm install --prefix api
 
       - name: Type-check API
-        run: npm run typecheck --workspace=api
+        run: npm run typecheck --prefix api
 
       - name: Run API tests
-        run: npm run test:run --workspace=api
+        run: npm run test:run --prefix api
